@@ -17,6 +17,9 @@ build/
 !vibe-services/*/index.ts
 !src/**/*.ts
 
+# Keep scripts (these are not build artifacts)
+!scripts/*.js
+
 # Environment variables
 .env
 .env.local
