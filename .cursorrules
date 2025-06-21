@@ -1,6 +1,15 @@
-# .cursorrules 文件：軟體開發與 AGI 融合指引 
+# .cursorrules 文件：軟體開發與 AGI 融合指引 (Windows 環境優化版)
  
-本文件旨在建立一套涵蓋軟體開發全流程與 AGI 輔助技術的整體指引，幫助團隊與個人達成快速原型 (POC) 開發、知識積累與持續優化。文件整合了以下各部分內容： 
+本文件旨在建立一套涵蓋軟體開發全流程與 AGI 輔助技術的整體指引，特別針對 **Windows 環境與 PowerShell** 進行優化，幫助團隊與個人達成快速原型 (POC) 開發、知識積累與持續優化。
+
+## 🖥️ Windows 環境特別說明
+本指引特別針對 Windows 10/11 環境進行優化，包含：
+- **PowerShell 與 Linux 指令對照表**
+- **Windows 特有問題解決方案**
+- **跨平台開發最佳實踐**
+- **Windows 開發環境設定指引**
+
+文件整合了以下各部分內容： 
  
 - 與使用者互動及內部記錄的基本指示   
 - 開發過程中各角色的分工與職責   
@@ -8,14 +17,27 @@
 - 快速 POC 開發的 SOP 指引   
 - 持續學習與自我優化的機制   
 - 套件與版本紀錄機制（含版本相依性守則）   
-- 依賴查詢：透過官方文件 URL 搜尋套件相依性資訊 
+- 依賴查詢：透過官方文件 URL 搜尋套件相依性資訊
+- **Windows 環境專用開發指引** ⭐ 新增 
  
 --- 
  
 ## 一、基本指示 (Instructions) 
- 
+
+### 🖥️ Windows 環境優先考量
+- **指令使用**: 優先使用 PowerShell 指令，必要時提供 Linux 對照
+- **路徑格式**: 使用 Windows 路徑格式 (`C:\path\to\file`)，但程式碼中使用跨平台寫法
+- **權限管理**: 注意 PowerShell 執行政策與管理員權限需求
+- **編碼問題**: 預設使用 UTF-8 without BOM 避免編碼問題
+
+### 📝 記錄與協作規則
 - **可重用資訊記錄**   
-  在與使用者互動過程中，若發現專案中可重用的資訊（例如函式庫版本、模型名稱、錯誤修正或收到的糾正），請立即記錄於本文件的 **Lessons** 區塊，避免日後重複相同錯誤。 
+  在與使用者互動過程中，若發現專案中可重用的資訊（例如函式庫版本、模型名稱、錯誤修正或收到的糾正），請立即記錄於本文件的 **Lessons** 區塊，避免日後重複相同錯誤。
+  
+  **Windows 特別注意**:
+  - 記錄 PowerShell 特有的解決方案
+  - 標註需要管理員權限的操作
+  - 記錄路徑相關的問題與解決方案
  
 - **Scratchpad 作為思考與記錄工具**   
   - 使用本文件作為 Scratchpad（工作筆記區），組織與記錄所有新任務的思考、規劃與進度。   
@@ -24,7 +46,12 @@
   - 說明任務內容、規劃完成任務所需步驟，可使用 todo markers 表示進度，如：   
     - [X] 任務 1   
     - [ ] 任務 2   
-  - 完成子任務時更新進度，並於每個里程碑後反思與記錄，確保全局規劃與細節追蹤兼備。 
+  - 完成子任務時更新進度，並於每個里程碑後反思與記錄，確保全局規劃與細節追蹤兼備。
+  
+  **Windows 任務規劃特別事項**:
+  - 標明需要管理員權限的任務
+  - 考慮 Windows Defender 或防毒軟體的影響
+  - 規劃跨平台相容性測試 
  
 --- 
  
@@ -213,7 +240,154 @@ Scratchpad.md
  
 --- 
  
-## 十一、版本相依性與官方文件查詢守則 
+## 十一、Windows 環境開發專用指引
+
+### Windows 系統特殊考量
+- **路徑分隔符號**: Windows 使用反斜線 `\`，但在程式碼中建議使用正斜線 `/` 或 `os.path.join()` 確保跨平台相容性
+- **環境變數設定**: 使用 `$env:VARIABLE_NAME` (PowerShell) 或 `%VARIABLE_NAME%` (CMD)
+- **權限管理**: 某些操作需要「以系統管理員身分執行」PowerShell
+- **檔案編碼**: 注意 UTF-8 BOM 問題，建議使用 UTF-8 without BOM
+
+### PowerShell vs Linux 指令對照表
+
+| 功能 | Linux/macOS | Windows PowerShell | 說明 |
+|------|-------------|-------------------|------|
+| **目錄操作** |
+| 列出檔案 | `ls -la` | `Get-ChildItem` 或 `dir` | PowerShell 別名：`ls`, `gci` |
+| 切換目錄 | `cd /path/to/dir` | `Set-Location C:\path\to\dir` | 別名：`cd`, `sl` |
+| 建立目錄 | `mkdir dirname` | `New-Item -ItemType Directory -Name dirname` | 別名：`mkdir`, `md` |
+| 刪除檔案 | `rm filename` | `Remove-Item filename` | 別名：`rm`, `del` |
+| 複製檔案 | `cp source dest` | `Copy-Item source dest` | 別名：`cp`, `copy` |
+| 移動檔案 | `mv source dest` | `Move-Item source dest` | 別名：`mv`, `move` |
+| **文件操作** |
+| 查看內容 | `cat filename` | `Get-Content filename` | 別名：`cat`, `gc` |
+| 編輯檔案 | `nano filename` | `notepad filename` | 或使用 `code filename` (VSCode) |
+| 搜尋文字 | `grep "pattern" file` | `Select-String "pattern" file` | 別名：`sls` |
+| **程序管理** |
+| 查看程序 | `ps aux` | `Get-Process` | 別名：`ps`, `gps` |
+| 終止程序 | `kill PID` | `Stop-Process -Id PID` | 別名：`kill`, `spps` |
+| **網路** |
+| 測試連線 | `ping hostname` | `Test-Connection hostname` | 或直接用 `ping` |
+| 下載檔案 | `wget URL` | `Invoke-WebRequest -Uri URL` | 別名：`wget`, `iwr` |
+| **環境變數** |
+| 設定變數 | `export VAR=value` | `$env:VAR = "value"` | 臨時設定 |
+| 查看變數 | `echo $VAR` | `$env:VAR` | 或 `Get-ChildItem Env:` |
+| **套件管理** |
+| Python 套件 | `pip install package` | `pip install package` | 相同，但注意路徑 |
+| Node.js 套件 | `npm install package` | `npm install package` | 相同 |
+| **權限** |
+| 執行權限 | `chmod +x script.sh` | `Set-ExecutionPolicy RemoteSigned` | PowerShell 執行政策 |
+
+### Windows 開發環境設定指令
+
+```powershell
+# 設定 PowerShell 執行政策 (管理員權限)
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+# 安裝 Chocolatey (Windows 套件管理器)
+Set-ExecutionPolicy Bypass -Scope Process -Force
+[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+
+# 常用開發工具安裝
+choco install git nodejs python vscode -y
+
+# Python 虛擬環境 (Windows)
+python -m venv venv
+.\venv\Scripts\Activate.ps1  # 啟動虛擬環境
+deactivate                   # 停用虛擬環境
+
+# Git 設定 (處理換行符號問題)
+git config --global core.autocrlf true
+git config --global core.safecrlf false
+```
+
+### Windows 特有問題解決方案
+
+1. **路徑長度限制**
+   ```powershell
+   # 啟用長路徑支援 (管理員權限)
+   New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force
+   ```
+
+2. **PowerShell 腳本執行問題**
+   ```powershell
+   # 臨時允許腳本執行
+   Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
+   
+   # 永久設定 (當前用戶)
+   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+   ```
+
+3. **檔案編碼問題**
+   ```powershell
+   # 設定 PowerShell 預設編碼為 UTF-8
+   $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
+   ```
+
+### Windows 開發最佳實踐
+
+- **使用 WSL2**: 對於需要 Linux 環境的專案，建議安裝 WSL2
+- **路徑處理**: 使用 `os.path.join()` 或 `pathlib.Path()` 處理路徑
+- **環境變數**: 使用 `.env` 檔案管理環境變數
+- **容器化**: 使用 Docker Desktop for Windows 確保環境一致性
+
+### VibeCoding Windows 專用指令
+
+在 Windows PowerShell 環境下使用 VibeCoding 時的特殊注意事項：
+
+```powershell
+# 建構所有服務 (Windows)
+npm run build
+
+# 測試 MCP 服務 (注意路徑格式)
+node "C:\path\to\your\vibeCoding-template\dist\vibe-services\context-manager\index.js"
+
+# 設定環境變數 (PowerShell)
+$env:ANTHROPIC_API_KEY = "your-api-key-here"
+$env:OPENAI_API_KEY = "your-api-key-here"
+
+# 檢查環境變數
+Get-ChildItem Env: | Where-Object Name -like "*API*"
+
+# Windows 路徑在 mcp.json 中的格式
+{
+  "mcpServers": {
+    "vibecoding-context-manager": {
+      "command": "node",
+      "args": ["C:\\Users\\YourName\\Projects\\vibeCoding-template\\dist\\vibe-services\\context-manager\\index.js"]
+    }
+  }
+}
+```
+
+### Windows 常見問題與解決方案
+
+1. **PowerShell 執行政策問題**
+   ```powershell
+   # 如果無法執行 .ps1 腳本
+   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+   ```
+
+2. **路徑包含空格問題**
+   ```powershell
+   # 使用引號包圍路徑
+   node "C:\Program Files\vibeCoding-template\dist\vibe-services\context-manager\index.js"
+   ```
+
+3. **Node.js 模組路徑問題**
+   ```powershell
+   # 確認 NODE_PATH 環境變數
+   $env:NODE_PATH = "C:\Users\YourName\AppData\Roaming\npm\node_modules"
+   ```
+
+4. **防毒軟體干擾**
+   ```powershell
+   # 將專案目錄加入 Windows Defender 排除清單
+   Add-MpPreference -ExclusionPath "C:\path\to\your\vibeCoding-template"
+   ```
+
+## 十二、版本相依性與官方文件查詢守則 
  
 - **版本相依性查詢**   
   - 每次引入新套件或更新現有套件前，必須查閱該套件官方文件，確認相依性與版本要求。   
@@ -241,4 +415,21 @@ Scratchpad.md
  
 ## 結語 
  
-本 .cursorrules 文件整合了大廠開發流程、運算思維、快速 POC 開發 SOP、持續學習與自我省思，以及套件與版本管理的全方位守則。所有團隊成員及 AI 輔助開發系統應依據本指引進行工作，並在每次任務中記錄與分享經驗，從而不斷完善流程、提升產品品質與技術水準，同時確保系統依賴資訊的透明性與可追蹤性。
+本 .cursorrules 文件整合了大廠開發流程、運算思維、快速 POC 開發 SOP、持續學習與自我省思，以及套件與版本管理的全方位守則，**特別針對 Windows 環境與 PowerShell 進行優化**。
+
+### 🖥️ Windows 環境開發重點提醒
+- 所有指令優先提供 PowerShell 版本，並標註與 Linux 的差異
+- 注意路徑分隔符號與權限管理的 Windows 特性
+- 考慮 Windows Defender 與防毒軟體對開發的影響
+- 善用 Windows 專用工具 (Chocolatey, WSL2, Docker Desktop)
+
+### 📋 開發流程檢查清單 (Windows 版)
+- [ ] 確認 PowerShell 執行政策設定
+- [ ] 檢查環境變數設定 (`$env:VAR_NAME`)
+- [ ] 驗證路徑格式正確性 (使用雙反斜線或正斜線)
+- [ ] 測試跨平台相容性
+- [ ] 確認防毒軟體排除清單設定
+
+所有團隊成員及 AI 輔助開發系統應依據本指引進行工作，並在每次任務中記錄與分享經驗，從而不斷完善流程、提升產品品質與技術水準，同時確保系統依賴資訊的透明性與可追蹤性。
+
+**特別提醒**: 在 Windows 環境下進行開發時，請優先參考本文件的 Windows 專用指引，確保開發效率與系統穩定性。
