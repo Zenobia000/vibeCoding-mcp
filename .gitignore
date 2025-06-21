@@ -1,0 +1,92 @@
+# Dependencies
+node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+dist/
+build/
+*.d.ts
+*.js
+*.js.map
+*.d.ts.map
+
+# Keep source TypeScript files in vibe-services
+!vibe-services/*/index.ts
+!src/**/*.ts
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+.nyc_output
+
+# Temporary files
+tmp/
+temp/
+
+# Process files (can be deleted after development)
+DOCUMENTATION_STATUS_UPDATE.md
+IMPLEMENTATION_COMPLETE.md
+IMPLEMENTATION_SUMMARY.md
+MCP_PROMPTS_ANSWER.md
+WHY_PHASES_EMPTY.md
+PHASE_EXAMPLE.md
+CLEANUP_RECOMMENDATIONS.md
+CLEANUP_COMPLETED_REPORT.md
+FINAL_CLEANUP_ANALYSIS.md
+NEWBIE_FRIENDLY_SUMMARY.md
+test-project/
+經驗教訓/
+
+# Sensitive information
+.env*
+*.key
+*.pem
+
+# Debug and testing
+debug.log
+error.log
+
+# Editor backups
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#* 
