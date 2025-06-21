@@ -250,12 +250,12 @@ function installVibeCoding() {
   log('\n📦 安裝 VibeCoding...', COLORS.BLUE);
   
   try {
-    log('正在安裝 vibecoding-system...');
-    execSync('npm install -g vibecoding-system', { stdio: 'inherit' });
-    log('✅ VibeCoding 安裝完成', COLORS.GREEN);
+    log('正在安裝專案依賴...');
+    execSync('npm install', { stdio: 'inherit' });
+    log('✅ VibeCoding 專案依賴安裝完成', COLORS.GREEN);
   } catch (error) {
-    log('❌ VibeCoding 安裝失敗', COLORS.RED);
-    log('請手動執行: npm install -g vibecoding-system', COLORS.YELLOW);
+    log('❌ VibeCoding 專案依賴安裝失敗', COLORS.RED);
+    log('請手動執行: npm install', COLORS.YELLOW);
     process.exit(1);
   }
 }
@@ -264,7 +264,7 @@ function verifyInstallation() {
   log('\n✅ 驗證安裝...', COLORS.BLUE);
   
   try {
-    const version = execSync('npx vibecoding-system --version', { encoding: 'utf-8' }).trim();
+    const version = execSync('npm run vibecoding -- --version', { encoding: 'utf-8' }).trim();
     log(`✅ VibeCoding ${version} 安裝成功`, COLORS.GREEN);
     
     log('正在測試 prompt 系統...');
@@ -281,8 +281,8 @@ function showNextSteps() {
   log('\n📋 後續步驟：');
   log('1. 重啟你的 IDE');
   log('2. 設定 API 金鑰（如果尚未設定）');
-  log('3. 執行: npx vibecoding-system init --name "test-project"');
-  log('4. 開始對話式開發: npx vibecoding-system chat');
+  log('3. 執行: npm run vibecoding init --name "test-project"');
+  log('4. 開始對話式開發: npm run vibecoding chat');
   
   log('\n📖 詳細說明請參考：');
   log('- IDE_SETUP_GUIDE.md - 完整設定指南');

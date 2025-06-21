@@ -3,16 +3,9 @@
 
 Write-Host "🚀 Building VibeCoding System..." -ForegroundColor Cyan
 
-# Build main project
-Write-Host "`n📦 Building main project..." -ForegroundColor Yellow
-npm run build
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "❌ Main project build failed!" -ForegroundColor Red
-    exit 1
-}
-Write-Host "✅ Main project built successfully" -ForegroundColor Green
-
-# Build all vibe-services
+# Phase 1: Install dependencies for all services
+# This is still necessary as each service has its own package.json for runtime dependencies
+Write-Host "`n📦 Installing dependencies for all services..." -ForegroundColor Cyan
 $services = @(
     "context-manager",
     "code-generator", 
@@ -21,30 +14,32 @@ $services = @(
     "test-validator",
     "deployment-manager"
 )
-
 foreach ($service in $services) {
-    Write-Host "`n📦 Building $service..." -ForegroundColor Yellow
-    
+    Write-Host "  Installing $service dependencies..." -ForegroundColor DarkYellow
     Push-Location "vibe-services/$service"
-    
-    # Build the service
-    npm run build
-    $buildResult = $LASTEXITCODE
-    
-    Pop-Location
-    
-    if ($buildResult -eq 0) {
-        Write-Host "✅ $service built successfully" -ForegroundColor Green
-    } else {
-        Write-Host "⚠️  $service build had issues (but continuing...)" -ForegroundColor Yellow
+    npm install
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "  ❌ $service dependencies installation failed! Continuing anyway." -ForegroundColor Red
     }
+    Pop-Location
 }
+Write-Host "✅ All service dependencies processed." -ForegroundColor Green
+
+
+# --- Phase 2: Build everything from the root ---
+Write-Host "`n🚀 Starting unified compilation..." -ForegroundColor Cyan
+
+# Build main project and all services
+Write-Host "`n📦 Building main project and all services..." -ForegroundColor Yellow
+npm run build
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "❌ Unified build failed!" -ForegroundColor Red
+    exit 1
+}
+Write-Host "✅ Unified build completed successfully" -ForegroundColor Green
 
 Write-Host "`n🎉 VibeCoding System build completed!" -ForegroundColor Cyan
-Write-Host "📋 Summary:" -ForegroundColor White
-Write-Host "  - Main project: ✅ Built" -ForegroundColor Green
-Write-Host "  - Services: $($services.Count) services processed" -ForegroundColor Green
-Write-Host "`n💡 Next steps:" -ForegroundColor Yellow
+Write-Host "💡 Next steps:" -ForegroundColor Yellow
 Write-Host "  1. Test CLI: npm run vibecoding" -ForegroundColor White  
 Write-Host "  2. Initialize project: npm run vibecoding init" -ForegroundColor White
 Write-Host "  3. Start system: npm start" -ForegroundColor White 

@@ -1,0 +1,23 @@
+{
+  "id": "session_1750517878117",
+  "startedAt": "2025-06-21T14:57:58.117Z",
+  "lastActivity": "2025-06-21T14:57:58.118Z",
+  "currentProject": "project-nzk1r4ne",
+  "conversationHistory": [
+    {
+      "id": "conv_1750517878118",
+      "timestamp": "2025-06-21T14:57:58.118Z",
+      "phase": "discovery",
+      "speaker": "system",
+      "content": "開始項目澄清: Test Task Manager",
+      "metadata": {
+        "type": "project_start",
+        "projectId": "project-nzk1r4ne"
+      }
+    }
+  ],
+  "activeServices": [
+    "context-manager"
+  ],
+  "userPreferences": {}
+}

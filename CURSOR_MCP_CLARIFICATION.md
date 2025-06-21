@@ -15,16 +15,21 @@
 ```json
 {
   "mcp.servers": {
-    "vibecoding": {
-      "command": "npx",
-      "args": ["vibecoding-system", "mcp"]
-      // 注意：沒有 env 區塊，不需要額外 API 金鑰
+    "vibecoding-context-manager": {
+      "command": "node",
+      "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/context-manager/index.js"],
+      "description": "VibeCoding 上下文管理服務"
+    },
+    "vibecoding-code-generator": {
+      "command": "node", 
+      "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/code-generator/index.js"],
+      "description": "VibeCoding 代碼生成服務"
     }
+    // 注意：沒有 env 區塊，不需要額外 API 金鑰
   },
   
   "vibecoding.defaultProvider": "cursor",  // 使用 Cursor 內建 LLM
-  "vibecoding.enabled": true,
-  "vibecoding.conversationMode": true
+  "vibecoding.enabled": true
 }
 ```
 
@@ -39,12 +44,18 @@
 ```json
 {
   "mcp.servers": {
-    "vibecoding": {
-      "command": "npx",
-      "args": ["vibecoding-system", "mcp"],
+    "vibecoding-context-manager": {
+      "command": "node",
+      "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/context-manager/index.js"],
       "env": {
-        "OPENAI_API_KEY": "你的金鑰",
-        "VIBECODING_PROVIDER": "openai"
+        "OPENAI_API_KEY": "你的金鑰"
+      }
+    },
+    "vibecoding-code-generator": {
+      "command": "node",
+      "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/code-generator/index.js"],
+      "env": {
+        "OPENAI_API_KEY": "你的金鑰"
       }
     }
   },
@@ -67,24 +78,19 @@
 ```json
 {
   "mcp.servers": {
-    "vibecoding": {
-      "command": "npx",
-      "args": ["vibecoding-system", "mcp"]
+    "vibecoding-context-manager": {
+      "command": "node",
+      "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/context-manager/index.js"]
+    },
+    "vibecoding-code-generator": {
+      "command": "node",
+      "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/code-generator/index.js"]
     }
   },
   
   // VibeCoding 基本設定
   "vibecoding.enabled": true,
-  "vibecoding.conversationMode": true,
-  "vibecoding.defaultProvider": "cursor",
-  
-  // 工作流程設定
-  "vibecoding.workflow.autoPhaseDetection": true,
-  "vibecoding.workflow.enableSmartSuggestions": true,
-  
-  // UI 設定
-  "vibecoding.ui.showProgressBar": true,
-  "vibecoding.ui.theme": "auto"
+  "vibecoding.defaultProvider": "cursor"
 }
 ```
 
@@ -148,9 +154,13 @@
 ```json
 {
   "mcp.servers": {
-    "vibecoding": {
-      "command": "npx",
-      "args": ["vibecoding-system", "mcp"]
+    "vibecoding-context-manager": {
+      "command": "node",
+      "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/context-manager/index.js"]
+    },
+    "vibecoding-code-generator": {
+      "command": "node",
+      "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/code-generator/index.js"]
     }
   },
   "vibecoding.enabled": true,
@@ -161,7 +171,9 @@
 2. **重啟 Cursor**
 
 3. **測試功能**:
-   - 在聊天中輸入：`@vibecoding 幫我創建一個 React 組件`
+   - 在聊天中輸入：
+  - **🆕 簡潔指令** (推薦)：`@vibe comp "React 組件"`
+  - **📝 完整指令** (仍可使用)：`@vibecoding-code-generator generate-code --requirements "React 組件" --language "typescript"`
    - 應該能正常工作，無需任何 API 金鑰
 
 ### 步驟 2: 如果想使用外部 API（可選）
@@ -172,12 +184,18 @@
 ```json
 {
   "mcp.servers": {
-    "vibecoding": {
-      "command": "npx",
-      "args": ["vibecoding-system", "mcp"],
+    "vibecoding-context-manager": {
+      "command": "node",
+      "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/context-manager/index.js"],
       "env": {
-        "OPENAI_API_KEY": "你的實際金鑰",
-        "VIBECODING_PROVIDER": "openai"
+        "OPENAI_API_KEY": "你的實際金鑰"
+      }
+    },
+    "vibecoding-code-generator": {
+      "command": "node",
+      "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/code-generator/index.js"],
+      "env": {
+        "OPENAI_API_KEY": "你的實際金鑰"
       }
     }
   },
@@ -191,11 +209,11 @@
 
 ### 檢查命令
 ```bash
-# 檢查 VibeCoding 狀態
-npx vibecoding-system status
+# 檢查服務檔案是否存在
+ls -la /path/to/your/vibeCoding-template/dist/vibe-services/*/index.js
 
-# 檢查 AI 提供者設定
-npx vibecoding-system config show --provider
+# 測試單個服務
+node /path/to/your/vibeCoding-template/dist/vibe-services/context-manager/index.js
 ```
 
 ### 預期輸出
@@ -219,9 +237,13 @@ npx vibecoding-system config show --provider
 ```json
 {
   "mcp.servers": {
-    "vibecoding": {
-      "command": "npx", 
-      "args": ["vibecoding-system", "mcp"]
+    "vibecoding-context-manager": {
+      "command": "node", 
+      "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/context-manager/index.js"]
+    },
+    "vibecoding-code-generator": {
+      "command": "node",
+      "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/code-generator/index.js"]
     }
   },
   "vibecoding.enabled": true,
@@ -239,13 +261,20 @@ npx vibecoding-system config show --provider
 ```json
 {
   "mcp.servers": {
-    "vibecoding": {
-      "command": "npx",
-      "args": ["vibecoding-system", "mcp"],
+    "vibecoding-context-manager": {
+      "command": "node",
+      "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/context-manager/index.js"],
       "env": {
         "OPENAI_API_KEY": "${OPENAI_API_KEY}",
-        "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}",
-        "VIBECODING_PROVIDER": "auto"  // 自動選擇最佳提供者
+        "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}"
+      }
+    },
+    "vibecoding-code-generator": {
+      "command": "node",
+      "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/code-generator/index.js"],
+      "env": {
+        "OPENAI_API_KEY": "${OPENAI_API_KEY}",
+        "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}"
       }
     }
   },
@@ -276,9 +305,9 @@ npx vibecoding-system config show --provider
 ```json
 {
   "mcp.servers": {
-    "vibecoding": {
-      "command": "npx",
-      "args": ["vibecoding-system", "mcp"]
+    "vibecoding-context-manager": {
+      "command": "node",
+      "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/context-manager/index.js"]
     }
   },
   "vibecoding.enabled": true

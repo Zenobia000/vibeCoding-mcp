@@ -12,22 +12,64 @@ export interface Service {
   stop(): Promise<void>;
 }
 
+/**
+ * Represents a question and answer pair from the clarification process
+ */
+export interface ClarificationResponse {
+  question: string;
+  answer: string;
+  timestamp: Date;
+}
+
+/**
+ * Represents a task within a development phase
+ */
+export interface Task {
+  id: string;
+  description: string;
+  completed: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/**
+ * Possible statuses for a development phase
+ */
+export type PhaseStatus = "pending" | "in_progress" | "completed" | "reviewed";
+
 export interface WorkflowPhase {
+  id: string;
   name: string;
-  status: "pending" | "in-progress" | "completed";
-  startTime?: Date;
-  endTime?: Date;
-  artifacts: string[];
+  description: string;
+  tasks: Task[];
+  status: PhaseStatus;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface Project {
   id: string;
   name: string;
   description: string;
-  created: Date;
+  clarificationResponses: ClarificationResponse[];
+  prd?: string;
+  prdDoc?: string;
+  implementationPlan?: string;
+  implDoc?: string;
   phases: WorkflowPhase[];
-  currentPhase: string;
-  metadata: Record<string, any>;
+  currentPhase?: string;
+  techStack?: Record<string, string>;
+  decisions?: Array<{
+    id: string;
+    timestamp: Date;
+    decision: string;
+    rationale: string;
+    impact: string;
+    service: string;
+  }>;
+  preferences?: Record<string, any>;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // Configuration Schema
@@ -124,18 +166,15 @@ export class VibeCodingOrchestrator extends EventEmitter {
   }
 
   public async createProject(name: string, description: string): Promise<Project> {
+    const now = new Date();
     const project: Project = {
       id: this.generateProjectId(),
       name,
       description,
-      created: new Date(),
-      phases: this.config.workflow.phases.map(phase => ({
-        name: phase,
-        status: "pending",
-        artifacts: [],
-      })),
-      currentPhase: this.config.workflow.phases[0],
-      metadata: {},
+      clarificationResponses: [],
+      phases: [],
+      createdAt: now,
+      updatedAt: now,
     };
     
     this.currentProject = project;
@@ -146,7 +185,7 @@ export class VibeCodingOrchestrator extends EventEmitter {
   }
 
   private generateProjectId(): string {
-    return `vibe-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return `project-${Math.random().toString(36).substring(2, 10)}`;
   }
 
   private async saveCurrentProject() {
@@ -166,15 +205,14 @@ export class VibeCodingOrchestrator extends EventEmitter {
       throw new Error(`Phase ${phaseName} not found`);
     }
     
-    phase.status = "in-progress";
-    phase.startTime = new Date();
-    this.currentProject.currentPhase = phaseName;
+    phase.status = "in_progress";
+    phase.updatedAt = new Date();
     
     await this.saveCurrentProject();
     this.emit("phase:started", phase);
   }
 
-  public async completePhase(phaseName: string, artifacts: string[] = []) {
+  public async completePhase(phaseName: string) {
     if (!this.currentProject) {
       throw new Error("No active project");
     }
@@ -185,17 +223,7 @@ export class VibeCodingOrchestrator extends EventEmitter {
     }
     
     phase.status = "completed";
-    phase.endTime = new Date();
-    phase.artifacts = artifacts;
-    
-    // Auto-progress to next phase if enabled
-    if (this.config.workflow.autoProgressTracking) {
-      const currentIndex = this.currentProject.phases.findIndex(p => p.name === phaseName);
-      if (currentIndex < this.currentProject.phases.length - 1) {
-        const nextPhase = this.currentProject.phases[currentIndex + 1];
-        await this.startPhase(nextPhase.name);
-      }
-    }
+    phase.updatedAt = new Date();
     
     await this.saveCurrentProject();
     this.emit("phase:completed", phase);

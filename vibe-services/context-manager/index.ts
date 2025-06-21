@@ -10,22 +10,36 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import {
   CallToolRequestSchema,
   ErrorCode,
-  ListResourcesRequestSchema,
+  InitializeRequestSchema,
   ListToolsRequestSchema,
   McpError,
-  ReadResourceRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
+import { z } from 'zod';
 
 // 導入 Prompt 管理系統
 import { 
   buildMCPServicePrompt, 
   ServiceId, 
   DevelopmentPhase,
-  promptManager,
-  MCP_SERVICE_CONFIGS
 } from '../../src/utils/prompt-manager.js';
+
+// 導入核心類型和工具
+import { 
+  Project,
+  ClarificationResponse
+} from '../../src/core/orchestrator.js';
+
+import {
+  createProjectObject,
+  DEFAULT_CLARIFICATION_QUESTIONS
+} from '../../src/utils/project-utils.js';
+
+import {
+  generatePRD,
+  generateImplementationPlan
+} from '../../src/utils/documentation.js';
 
 interface ConversationEntry {
   id: string;
@@ -36,23 +50,8 @@ interface ConversationEntry {
   metadata?: Record<string, any>;
 }
 
-interface ProjectContext {
-  id: string;
-  name: string;
-  description: string;
-  createdAt: Date;
-  currentPhase: DevelopmentPhase;
-  techStack: Record<string, string>;
-  decisions: Array<{
-    id: string;
-    timestamp: Date;
-    decision: string;
-    rationale: string;
-    impact: string;
-    service: string;
-  }>;
-  preferences: Record<string, any>;
-}
+// Use the Project type from orchestrator instead of ProjectContext
+// interface ProjectContext will be replaced by Project type
 
 interface SessionContext {
   id: string;
@@ -71,6 +70,7 @@ class VibeContextManager {
   private currentSession: SessionContext | null = null;
   private persistentContext: Map<string, any> = new Map();
   private servicePrompt: string = '';
+  private projects: Map<string, Project> = new Map();
 
   constructor() {
     this.contextDir = join(process.cwd(), '.vibecoding', 'context');
@@ -79,9 +79,207 @@ class VibeContextManager {
     
     this.ensureContextDirectory();
     this.loadPersistentContext();
+    this.loadProjects();
     
     // 初始化 Prompt 系統
     this.initializePromptSystem();
+  }
+
+  /**
+   * 載入項目數據
+   */
+  private loadProjects(): void {
+    try {
+      const projectsData = this.persistentContext.get('projects') || {};
+      this.projects = new Map(Object.entries(projectsData));
+    } catch (error) {
+      console.error('Failed to load projects:', error);
+    }
+  }
+
+  /**
+   * 保存項目數據
+   */
+  private saveProjects(): void {
+    try {
+      const projectsData = Object.fromEntries(this.projects);
+      this.persistentContext.set('projects', projectsData);
+      this.savePersistentContext();
+    } catch (error) {
+      console.error('Failed to save projects:', error);
+    }
+  }
+
+  /**
+   * 開始項目澄清流程
+   */
+  async startProjectClarification(projectName: string, initialDescription: string = ''): Promise<{
+    projectId: string;
+    question: string;
+    questionIndex: number;
+    totalQuestions: number;
+  }> {
+    // 創建新項目
+    const project = createProjectObject(projectName, initialDescription);
+    this.projects.set(project.id, project);
+    this.saveProjects();
+    
+    // 開始會話（如果還沒有）
+    if (!this.currentSession) {
+      await this.startSession(project.id);
+    } else {
+      this.currentSession.currentProject = project.id;
+      this.saveSessionContext();
+    }
+
+    // 記錄開始澄清的對話
+    await this.addConversation('system', `開始項目澄清: ${projectName}`, {
+      type: 'project_start',
+      projectId: project.id
+    });
+
+    // 返回第一個澄清問題
+    const firstQuestion = DEFAULT_CLARIFICATION_QUESTIONS[0];
+    return {
+      projectId: project.id,
+      question: firstQuestion,
+      questionIndex: 0,
+      totalQuestions: DEFAULT_CLARIFICATION_QUESTIONS.length
+    };
+  }
+
+  /**
+   * 提供澄清回答
+   */
+  async provideClarification(
+    projectId: string, 
+    questionIndex: number, 
+    answer: string
+  ): Promise<{
+    success: boolean;
+    nextQuestion?: string;
+    nextQuestionIndex?: number;
+    isComplete: boolean;
+    message: string;
+  }> {
+    const project = this.projects.get(projectId);
+    if (!project) {
+      throw new Error(`Project not found: ${projectId}`);
+    }
+
+    // 添加澄清回答
+    const clarificationResponse: ClarificationResponse = {
+      question: DEFAULT_CLARIFICATION_QUESTIONS[questionIndex],
+      answer,
+      timestamp: new Date()
+    };
+
+    project.clarificationResponses.push(clarificationResponse);
+    project.updatedAt = new Date();
+    this.projects.set(projectId, project);
+    this.saveProjects();
+
+    // 記錄澄清對話
+    await this.addConversation('user', answer, {
+      type: 'clarification_response',
+      projectId,
+      questionIndex,
+      question: DEFAULT_CLARIFICATION_QUESTIONS[questionIndex]
+    });
+
+    // 檢查是否完成所有澄清
+    const nextIndex = questionIndex + 1;
+    if (nextIndex >= DEFAULT_CLARIFICATION_QUESTIONS.length) {
+      return {
+        success: true,
+        isComplete: true,
+        message: `✅ 項目澄清完成！已收集到 ${project.clarificationResponses.length} 個回答。現在可以生成 PRD 和實施計劃。`
+      };
+    }
+
+    // 返回下一個問題
+    const nextQuestion = DEFAULT_CLARIFICATION_QUESTIONS[nextIndex];
+    return {
+      success: true,
+      nextQuestion,
+      nextQuestionIndex: nextIndex,
+      isComplete: false,
+      message: `✅ 回答已記錄。接下來是第 ${nextIndex + 1} 個問題：`
+    };
+  }
+
+  /**
+   * 生成 PRD
+   */
+  async generateProjectPRD(projectId: string): Promise<string> {
+    const project = this.projects.get(projectId);
+    if (!project) {
+      throw new Error(`Project not found: ${projectId}`);
+    }
+
+    if (project.clarificationResponses.length === 0) {
+      throw new Error('No clarification responses available. Please complete the clarification process first.');
+    }
+
+    const prd = generatePRD(project);
+    
+    // 保存 PRD 到項目
+    project.prd = prd;
+    project.updatedAt = new Date();
+    this.projects.set(projectId, project);
+    this.saveProjects();
+
+    // 記錄 PRD 生成
+    await this.addConversation('system', 'PRD 已生成', {
+      type: 'prd_generated',
+      projectId
+    });
+
+    return prd;
+  }
+
+  /**
+   * 生成實施計劃
+   */
+  async generateProjectImplementationPlan(projectId: string): Promise<string> {
+    const project = this.projects.get(projectId);
+    if (!project) {
+      throw new Error(`Project not found: ${projectId}`);
+    }
+
+    if (project.clarificationResponses.length === 0) {
+      throw new Error('No clarification responses available. Please complete the clarification process first.');
+    }
+
+    const implementationPlan = generateImplementationPlan(project);
+    
+    // 保存實施計劃到項目
+    project.implementationPlan = implementationPlan;
+    project.updatedAt = new Date();
+    this.projects.set(projectId, project);
+    this.saveProjects();
+
+    // 記錄實施計劃生成
+    await this.addConversation('system', '實施計劃已生成', {
+      type: 'implementation_plan_generated',
+      projectId
+    });
+
+    return implementationPlan;
+  }
+
+  /**
+   * 獲取項目詳情
+   */
+  getProject(projectId: string): Project | null {
+    return this.projects.get(projectId) || null;
+  }
+
+  /**
+   * 列出所有項目
+   */
+  listProjects(): Project[] {
+    return Array.from(this.projects.values());
   }
 
   /**
@@ -111,14 +309,15 @@ class VibeContextManager {
    * 獲取當前開發階段
    */
   private getCurrentPhase(): DevelopmentPhase {
-    const project = this.getCurrentProject();
-    return project?.currentPhase || DevelopmentPhase.DISCOVERY;
+    // For now, default to DISCOVERY phase
+    // TODO: Add phase tracking to Project type or derive from phases array
+    return DevelopmentPhase.DISCOVERY;
   }
 
   /**
    * 獲取當前項目上下文
    */
-  private getCurrentProject(): ProjectContext | null {
+  private getCurrentProject(): Project | null {
     if (!this.currentSession?.currentProject) return null;
     
     const projects = this.persistentContext.get('projects') || {};
@@ -134,10 +333,10 @@ class VibeContextManager {
 
     return {
       name: project.name,
-      phase: project.currentPhase,
-      techStack: project.techStack,
-      recentDecisions: project.decisions.slice(-5),
-      preferences: project.preferences
+      phase: project.currentPhase || 'discovery',
+      techStack: project.techStack || {},
+      recentDecisions: project.decisions?.slice(-5) || [],
+      preferences: project.preferences || {}
     };
   }
 
@@ -224,7 +423,7 @@ class VibeContextManager {
     
     // 如果是重要的對話，分析並提取關鍵信息
     if (speaker === 'user' && this.isImportantConversation(content)) {
-      await this.analyzeAndExtractContext(content, metadata);
+      await this.analyzeAndExtractContext(content);
     }
 
     this.saveSessionContext();
@@ -245,7 +444,7 @@ class VibeContextManager {
   /**
    * 分析對話並提取上下文信息
    */
-  private async analyzeAndExtractContext(content: string, metadata?: Record<string, any>): Promise<void> {
+  private async analyzeAndExtractContext(content: string): Promise<void> {
     // 這裡可以使用 AI 來分析對話內容並提取關鍵信息
     // 目前使用簡單的關鍵詞匹配
 
@@ -266,6 +465,7 @@ class VibeContextManager {
     if (project) {
       for (const [tech, category] of Object.entries(techStackKeywords)) {
         if (content.toLowerCase().includes(tech.toLowerCase())) {
+          if (!project.techStack) project.techStack = {};
           project.techStack[category] = tech;
         }
       }
@@ -293,6 +493,7 @@ class VibeContextManager {
       ...decision
     };
 
+    if (!project.decisions) project.decisions = [];
     project.decisions.push(decisionRecord);
     this.updateProjectContext(project);
 
@@ -306,7 +507,7 @@ class VibeContextManager {
   /**
    * 更新項目上下文
    */
-  private updateProjectContext(project: ProjectContext): void {
+  private updateProjectContext(project: Project): void {
     const projects = this.persistentContext.get('projects') || {};
     projects[project.id] = project;
     this.persistentContext.set('projects', projects);
@@ -342,13 +543,13 @@ class VibeContextManager {
     }
 
     const recentConversations = session.conversationHistory.slice(-5);
-    const recentDecisions = project.decisions.slice(-3);
+    const recentDecisions = project.decisions?.slice(-3) || [];
 
     return `📊 **項目上下文摘要**
 
 🎯 **項目**: ${project.name}
 📋 **階段**: ${project.currentPhase}
-🏗️ **技術棧**: ${Object.entries(project.techStack).map(([k, v]) => `${k}: ${v}`).join(', ') || '未設定'}
+🏗️ **技術棧**: ${Object.entries(project.techStack || {}).map(([k, v]) => `${k}: ${v}`).join(', ') || '未設定'}
 
 📈 **會話狀態**
 - 開始時間: ${session.startedAt.toLocaleString()}
@@ -356,7 +557,7 @@ class VibeContextManager {
 - 活躍服務: ${session.activeServices.join(', ')}
 
 🔄 **最近決策**
-${recentDecisions.map(d => `- ${d.decision} (${d.service})`).join('\n') || '暫無決策記錄'}
+${recentDecisions.map((d: any) => `- ${d.decision} (${d.service})`).join('\n') || '暫無決策記錄'}
 
 💬 **最近對話重點**
 ${recentConversations.map(c => `- ${c.speaker}: ${c.content.substring(0, 100)}...`).join('\n') || '暫無對話記錄'}
@@ -385,7 +586,7 @@ ${recentConversations.map(c => `- ${c.speaker}: ${c.content.substring(0, 100)}..
     }
     
     if (query.includes('問題') || query.includes('困難')) {
-      return this.generateProblemSolvingSuggestions(query);
+      return this.generateProblemSolvingSuggestions();
     }
 
     return `🧠 **AI 分析建議**
@@ -459,7 +660,7 @@ ${suggestions[phase].map((item, index) => `${index + 1}. ${item}`).join('\n')}
   /**
    * 生成問題解決建議
    */
-  private generateProblemSolvingSuggestions(query: string): string {
+  private generateProblemSolvingSuggestions(): string {
     return `🔧 **問題解決建議**
 
 針對你提到的問題，我建議：
@@ -500,6 +701,23 @@ const server = new Server(
 
 const contextManager = new VibeContextManager();
 
+// 初始化處理
+server.setRequestHandler(InitializeRequestSchema, async (request) => {
+  console.error('📡 Received initialize request:', JSON.stringify(request.params, null, 2));
+  return {
+    protocolVersion: "2024-11-05",
+    capabilities: {
+      resources: {},
+      tools: {},
+      prompts: {}
+    },
+    serverInfo: {
+      name: "vibecoding-context-manager",
+      version: "1.0.0"
+    }
+  };
+});
+
 // 工具定義
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
@@ -515,6 +733,14 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: 'Optional project ID to continue working on'
             }
           }
+        }
+      },
+      {
+        name: 'get-context-summary',
+        description: 'Get a summary of the current project and session context',
+        inputSchema: {
+          type: 'object',
+          properties: {}
         }
       },
       {
@@ -551,7 +777,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: 'The decision that was made'
             },
             rationale: {
-              type: 'string', 
+              type: 'string',
               description: 'Why this decision was made'
             },
             impact: {
@@ -567,14 +793,6 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: 'get-context-summary',
-        description: 'Get a summary of the current project and session context',
-        inputSchema: {
-          type: 'object',
-          properties: {}
-        }
-      },
-      {
         name: 'get-relevant-history',
         description: 'Retrieve relevant conversation history based on a query',
         inputSchema: {
@@ -586,8 +804,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             limit: {
               type: 'number',
-              description: 'Maximum number of entries to return',
-              default: 10
+              default: 10,
+              description: 'Maximum number of entries to return'
             }
           },
           required: ['query']
@@ -606,6 +824,96 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ['query']
         }
+      },
+      {
+        name: 'start-clarification',
+        description: 'Start a project clarification process',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            projectName: {
+              type: 'string',
+              description: 'The name of the project'
+            },
+            initialDescription: {
+              type: 'string',
+              description: 'Initial description of the project'
+            }
+          },
+          required: ['projectName']
+        }
+      },
+      {
+        name: 'provide-clarification',
+        description: 'Provide a clarification answer',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            projectId: {
+              type: 'string',
+              description: 'The ID of the project'
+            },
+            questionIndex: {
+              type: 'number',
+              description: 'The index of the question'
+            },
+            answer: {
+              type: 'string',
+              description: 'The answer to the question'
+            }
+          },
+          required: ['projectId', 'questionIndex', 'answer']
+        }
+      },
+      {
+        name: 'generate-prd',
+        description: 'Generate a project PRD',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            projectId: {
+              type: 'string',
+              description: 'The ID of the project'
+            }
+          },
+          required: ['projectId']
+        }
+      },
+      {
+        name: 'get-project',
+        description: 'Get project details',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            projectId: {
+              type: 'string',
+              description: 'The ID of the project'
+            }
+          },
+          required: ['projectId']
+        }
+      },
+      {
+        name: 'list-projects',
+        description: 'List all projects',
+        inputSchema: {
+          type: 'object',
+          properties: {}
+        }
+      },
+      {
+        name: 'generate-impl-plan',
+        description: 'Generate a project implementation plan',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            projectId: {
+              type: 'string',
+              description: 'The ID of the project'
+            }
+          },
+          required: ['projectId']
+        }
       }
     ]
   };
@@ -618,40 +926,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
     switch (name) {
       case 'start-session': {
-        const session = await contextManager.startSession(args.projectId);
+        const parsedArgs = z.object({ projectId: z.string().optional() }).parse(args);
+        const session = await contextManager.startSession(parsedArgs.projectId);
         return {
           content: [
             {
               type: 'text',
-              text: `🚀 **VibeCoding 會話已啟動**\n\n會話ID: ${session.id}\n開始時間: ${session.startedAt.toLocaleString()}\n${args.projectId ? `項目: ${args.projectId}` : '新項目會話'}\n\n準備開始對話式開發！`
-            }
-          ]
-        };
-      }
-
-      case 'add-conversation': {
-        await contextManager.addConversation(
-          args.speaker,
-          args.content,
-          args.metadata
-        );
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `✅ **對話已記錄**\n\n發言者: ${args.speaker}\n內容長度: ${args.content.length} 字符\n時間: ${new Date().toLocaleString()}`
-            }
-          ]
-        };
-      }
-
-      case 'record-decision': {
-        await contextManager.recordDecision(args);
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `📋 **決策已記錄**\n\n決策: ${args.decision}\n理由: ${args.rationale}\n影響: ${args.impact}\n服務: ${args.service}\n\n此決策將影響後續開發決策。`
+              text: `🚀 **VibeCoding 會話已啟動**\n\n會話ID: ${session.id}\n開始時間: ${session.startedAt.toLocaleString()}\n${parsedArgs.projectId ? `項目: ${parsedArgs.projectId}` : '新項目會話'}\n\n準備開始對話式開發！`
             }
           ]
         };
@@ -669,29 +950,149 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
-      case 'get-relevant-history': {
-        const history = contextManager.getRelevantHistory(args.query, args.limit);
-        const historyText = history.length > 0 
-          ? history.map(h => `**${h.speaker}** (${h.timestamp.toLocaleString()}): ${h.content}`).join('\n\n')
-          : '未找到相關歷史記錄。';
-          
+      case 'add-conversation': {
+        const parsedArgs = z.object({
+          speaker: z.enum(['user', 'assistant', 'system']),
+          content: z.string(),
+          metadata: z.record(z.any()).optional()
+        }).parse(args);
+        
+        await contextManager.addConversation(parsedArgs.speaker, parsedArgs.content, parsedArgs.metadata);
         return {
           content: [
             {
               type: 'text',
-              text: `🔍 **相關歷史記錄** (查詢: "${args.query}")\n\n${historyText}`
+              text: `✅ **對話已記錄**\n\n發言者: ${parsedArgs.speaker}\n內容: ${parsedArgs.content.substring(0, 100)}${parsedArgs.content.length > 100 ? '...' : ''}`
+            }
+          ]
+        };
+      }
+
+      case 'record-decision': {
+        const parsedArgs = z.object({
+          decision: z.string(),
+          rationale: z.string(),
+          impact: z.string(),
+          service: z.string()
+        }).parse(args);
+        
+        await contextManager.recordDecision(parsedArgs);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `📝 **決策已記錄**\n\n決策: ${parsedArgs.decision}\n理由: ${parsedArgs.rationale}\n影響: ${parsedArgs.impact}\n服務: ${parsedArgs.service}`
+            }
+          ]
+        };
+      }
+
+      case 'get-relevant-history': {
+        const parsedArgs = z.object({
+          query: z.string(),
+          limit: z.number().default(10)
+        }).parse(args);
+        
+        const history = contextManager.getRelevantHistory(parsedArgs.query, parsedArgs.limit);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `🔍 **相關歷史記錄**\n\n查詢: ${parsedArgs.query}\n找到 ${history.length} 條記錄:\n\n${history.map(h => `- ${h.speaker}: ${h.content.substring(0, 80)}... (${h.timestamp.toLocaleString()})`).join('\n') || '無相關記錄'}`
             }
           ]
         };
       }
 
       case 'get-ai-insight': {
-        const insight = await contextManager.getAIInsight(args.query);
+        const parsedArgs = z.object({ query: z.string() }).parse(args);
+        const insight = await contextManager.getAIInsight(parsedArgs.query);
         return {
           content: [
             {
               type: 'text',
               text: insight
+            }
+          ]
+        };
+      }
+
+      case 'start-clarification': {
+        const parsedArgs = z.object({ projectName: z.string(), initialDescription: z.string().optional() }).parse(args);
+        const result = await contextManager.startProjectClarification(parsedArgs.projectName, parsedArgs.initialDescription);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `🚀 **項目澄清已啟動**\n\n項目ID: ${result.projectId}\n問題: ${result.question}\n問題索引: ${result.questionIndex}\n總問題數: ${result.totalQuestions}`
+            }
+          ]
+        };
+      }
+
+      case 'provide-clarification': {
+        const parsedArgs = z.object({ projectId: z.string(), questionIndex: z.number(), answer: z.string() }).parse(args);
+        const result = await contextManager.provideClarification(parsedArgs.projectId, parsedArgs.questionIndex, parsedArgs.answer);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: result.message
+            }
+          ]
+        };
+      }
+
+      case 'generate-prd': {
+        const parsedArgs = z.object({ projectId: z.string() }).parse(args);
+        const prd = await contextManager.generateProjectPRD(parsedArgs.projectId);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `🎯 **PRD 已生成**\n\n${prd}`
+            }
+          ]
+        };
+      }
+
+      case 'get-project': {
+        const parsedArgs = z.object({ projectId: z.string() }).parse(args);
+        const project = contextManager.getProject(parsedArgs.projectId);
+        if (project) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `🎯 **項目詳情**\n\n${JSON.stringify(project, null, 2)}`
+              }
+            ]
+          };
+        } else {
+          throw new McpError(ErrorCode.InvalidRequest, 'Project not found');
+        }
+      }
+
+      case 'list-projects': {
+        const projects = contextManager.listProjects();
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `🎯 **項目列表**\n\n${projects.map(p => `- ${p.name} (${p.id})`).join('\n') || '暫無項目'}`
+            }
+          ]
+        };
+      }
+
+      case 'generate-impl-plan': {
+        const parsedArgs = z.object({ projectId: z.string() }).parse(args);
+        const plan = await contextManager.generateProjectImplementationPlan(parsedArgs.projectId);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `📋 **實施計劃已生成**\n\n${plan}`
             }
           ]
         };
@@ -712,7 +1113,7 @@ async function runServer() {
   
   console.error('🎯 VibeCoding Context Manager MCP Server starting...');
   console.error('📋 Prompt system integration: ENABLED');
-  console.error('🔧 Available tools: start-session, add-conversation, record-decision, get-context-summary, get-relevant-history, get-ai-insight');
+  console.error('🔧 Available tools: start-session, add-conversation, record-decision, get-context-summary, get-relevant-history, get-ai-insight, start-clarification, provide-clarification, generate-prd, generate-impl-plan, get-project, list-projects');
   
   await server.connect(transport);
 }

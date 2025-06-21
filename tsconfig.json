@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "ESNext",
+    "module": "NodeNext",
     "lib": ["ES2022"],
-    "moduleResolution": "node",
+    "moduleResolution": "NodeNext",
     "outDir": "./dist",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
@@ -26,12 +26,12 @@
     }
   },
   "include": [
-    "src/**/*"
+    "src/**/*.ts",
+    "vibe-services/**/*.ts"
   ],
   "exclude": [
     "node_modules",
     "dist",
-    "vibe-services",
     "**/*.test.ts",
     "**/*.spec.ts"
   ]

@@ -1,0 +1,401 @@
+{
+  "description": "VibeCoding MCP 配置範例集合",
+  "version": "1.0.0",
+  "examples": {
+    "minimal": {
+      "description": "最簡配置 - 只使用 Context Manager 和 Code Generator",
+      "config": {
+        "mcpServers": {
+          "vibecoding-context-manager": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/context-manager/index.js"],
+            "description": "VibeCoding 上下文管理服務"
+          },
+          "vibecoding-code-generator": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/code-generator/index.js"],
+            "description": "VibeCoding 代碼生成服務"
+          }
+        }
+      }
+    },
+    "full": {
+      "description": "完整配置 - 包含所有 6 個服務",
+      "config": {
+        "mcpServers": {
+          "vibecoding-context-manager": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/context-manager/index.js"],
+            "description": "VibeCoding 上下文管理服務"
+          },
+          "vibecoding-code-generator": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/code-generator/index.js"],
+            "description": "VibeCoding 代碼生成服務"
+          },
+          "vibecoding-dependency-tracker": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/dependency-tracker/index.js"],
+            "description": "VibeCoding 依賴追蹤服務"
+          },
+          "vibecoding-test-validator": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/test-validator/index.js"],
+            "description": "VibeCoding 測試驗證服務"
+          },
+          "vibecoding-doc-generator": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/doc-generator/index.js"],
+            "description": "VibeCoding 文檔生成服務"
+          },
+          "vibecoding-deployment-manager": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/deployment-manager/index.js"],
+            "description": "VibeCoding 部署管理服務"
+          }
+        }
+      }
+    },
+    "with-openai": {
+      "description": "使用 OpenAI API 的配置",
+      "config": {
+        "mcpServers": {
+          "vibecoding-context-manager": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/context-manager/index.js"],
+            "env": {
+              "OPENAI_API_KEY": "${OPENAI_API_KEY}",
+              "VIBECODING_DEFAULT_PROVIDER": "openai",
+              "VIBECODING_LOG_LEVEL": "info"
+            }
+          },
+          "vibecoding-code-generator": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/code-generator/index.js"],
+            "env": {
+              "OPENAI_API_KEY": "${OPENAI_API_KEY}",
+              "VIBECODING_DEFAULT_LANGUAGE": "typescript",
+              "VIBECODING_DEFAULT_FRAMEWORK": "react"
+            }
+          }
+        }
+      }
+    },
+    "with-anthropic": {
+      "description": "使用 Anthropic Claude API 的配置",
+      "config": {
+        "mcpServers": {
+          "vibecoding-context-manager": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/context-manager/index.js"],
+            "env": {
+              "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}",
+              "VIBECODING_DEFAULT_PROVIDER": "anthropic",
+              "VIBECODING_LOG_LEVEL": "info"
+            }
+          },
+          "vibecoding-code-generator": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/code-generator/index.js"],
+            "env": {
+              "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}",
+              "VIBECODING_DEFAULT_LANGUAGE": "typescript",
+              "VIBECODING_CODE_STYLE": "functional"
+            }
+          }
+        }
+      }
+    },
+    "development": {
+      "description": "開發環境配置 - 詳細日誌和調試模式",
+      "config": {
+        "mcpServers": {
+          "vibecoding-context-manager": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/context-manager/index.js"],
+            "env": {
+              "VIBECODING_ENVIRONMENT": "development",
+              "VIBECODING_LOG_LEVEL": "debug",
+              "VIBECODING_CONTEXT_PERSISTENCE": "false",
+              "VIBECODING_AUTO_SAVE": "false"
+            }
+          },
+          "vibecoding-code-generator": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/code-generator/index.js"],
+            "env": {
+              "VIBECODING_INCLUDE_COMMENTS": "true",
+              "VIBECODING_INCLUDE_TESTS": "always",
+              "VIBECODING_ERROR_HANDLING": "comprehensive"
+            }
+          },
+          "vibecoding-test-validator": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/test-validator/index.js"],
+            "env": {
+              "VIBECODING_AUTO_RUN_TESTS": "true",
+              "VIBECODING_COVERAGE_THRESHOLD": "70"
+            }
+          }
+        }
+      }
+    },
+    "production": {
+      "description": "生產環境配置 - 穩定性和性能優先",
+      "config": {
+        "mcpServers": {
+          "vibecoding-context-manager": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/context-manager/index.js"],
+            "env": {
+              "VIBECODING_ENVIRONMENT": "production",
+              "VIBECODING_LOG_LEVEL": "error",
+              "VIBECODING_CONTEXT_PERSISTENCE": "true",
+              "VIBECODING_AUTO_SAVE": "true",
+              "VIBECODING_SESSION_TIMEOUT": "1800000"
+            }
+          },
+          "vibecoding-code-generator": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/code-generator/index.js"],
+            "env": {
+              "VIBECODING_OPTIMIZATION": "performance",
+              "VIBECODING_ERROR_HANDLING": "comprehensive",
+              "VIBECODING_INCLUDE_TESTS": "auto"
+            }
+          },
+          "vibecoding-deployment-manager": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/deployment-manager/index.js"],
+            "env": {
+              "VIBECODING_DEFAULT_ENVIRONMENT": "production",
+              "VIBECODING_AUTO_OPTIMIZE": "true",
+              "VIBECODING_INCLUDE_MONITORING": "true"
+            }
+          }
+        }
+      }
+    },
+    "team": {
+      "description": "團隊協作配置 - 共享上下文和代碼審查",
+      "config": {
+        "mcpServers": {
+          "vibecoding-context-manager": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/context-manager/index.js"],
+            "env": {
+              "VIBECODING_TEAM_MODE": "true",
+              "VIBECODING_SHARED_CONTEXT": "true",
+              "VIBECODING_COLLABORATION_SERVER": "https://team.vibecoding.dev",
+              "VIBECODING_AUTO_PROGRESS_TRACKING": "true"
+            }
+          },
+          "vibecoding-code-generator": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/code-generator/index.js"],
+            "env": {
+              "VIBECODING_CODE_REVIEW": "mandatory",
+              "VIBECODING_INCLUDE_COMMENTS": "true",
+              "VIBECODING_DOCUMENTATION": "comprehensive"
+            }
+          },
+          "vibecoding-doc-generator": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/doc-generator/index.js"],
+            "env": {
+              "VIBECODING_AUTO_UPDATE_README": "true",
+              "VIBECODING_INCLUDE_EXAMPLES": "true",
+              "VIBECODING_AUTO_CHANGELOG": "true"
+            }
+          }
+        }
+      }
+    },
+    "enterprise": {
+      "description": "企業級配置 - 安全性和合規性",
+      "config": {
+        "mcpServers": {
+          "vibecoding-context-manager": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/context-manager/index.js"],
+            "env": {
+              "VIBECODING_ENTERPRISE_MODE": "true",
+              "VIBECODING_COMPLIANCE_MODE": "true",
+              "VIBECODING_AUDIT_LOGGING": "true",
+              "VIBECODING_SECURITY_LEVEL": "high",
+              "VIBECODING_DATA_RETENTION": "365",
+              "VIBECODING_ENCRYPTION": "true"
+            }
+          },
+          "vibecoding-code-generator": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/code-generator/index.js"],
+            "env": {
+              "VIBECODING_SECURITY_REVIEW": "mandatory",
+              "VIBECODING_COMPLIANCE_CHECK": "true",
+              "VIBECODING_CODE_SIGNING": "true"
+            }
+          },
+          "vibecoding-dependency-tracker": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/dependency-tracker/index.js"],
+            "env": {
+              "VIBECODING_SECURITY_SCAN_LEVEL": "critical",
+              "VIBECODING_VULNERABILITY_DB": "enterprise",
+              "VIBECODING_LICENSE_COMPLIANCE": "true"
+            }
+          }
+        }
+      }
+    },
+    "react-focused": {
+      "description": "React 開發專用配置",
+      "config": {
+        "mcpServers": {
+          "vibecoding-context-manager": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/context-manager/index.js"]
+          },
+          "vibecoding-code-generator": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/code-generator/index.js"],
+            "env": {
+              "VIBECODING_DEFAULT_LANGUAGE": "typescript",
+              "VIBECODING_DEFAULT_FRAMEWORK": "react",
+              "VIBECODING_CODE_STYLE": "functional",
+              "VIBECODING_PREFER_HOOKS": "true",
+              "VIBECODING_INCLUDE_PROP_TYPES": "true",
+              "VIBECODING_CSS_FRAMEWORK": "tailwind"
+            }
+          },
+          "vibecoding-test-validator": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/test-validator/index.js"],
+            "env": {
+              "VIBECODING_DEFAULT_TEST_FRAMEWORK": "jest",
+              "VIBECODING_REACT_TESTING_LIBRARY": "true",
+              "VIBECODING_INCLUDE_E2E": "true",
+              "VIBECODING_E2E_FRAMEWORK": "cypress"
+            }
+          }
+        }
+      }
+    },
+    "nodejs-api": {
+      "description": "Node.js API 開發配置",
+      "config": {
+        "mcpServers": {
+          "vibecoding-context-manager": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/context-manager/index.js"]
+          },
+          "vibecoding-code-generator": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/code-generator/index.js"],
+            "env": {
+              "VIBECODING_DEFAULT_LANGUAGE": "typescript",
+              "VIBECODING_DEFAULT_FRAMEWORK": "express",
+              "VIBECODING_CODE_TYPE": "api",
+              "VIBECODING_DATABASE": "postgresql",
+              "VIBECODING_ORM": "prisma",
+              "VIBECODING_AUTH": "jwt"
+            }
+          },
+          "vibecoding-dependency-tracker": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/dependency-tracker/index.js"],
+            "env": {
+              "VIBECODING_DEFAULT_PACKAGE_MANAGER": "npm",
+              "VIBECODING_SECURITY_SCAN_LEVEL": "high"
+            }
+          },
+          "vibecoding-doc-generator": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/doc-generator/index.js"],
+            "env": {
+              "VIBECODING_API_DOC_FORMAT": "openapi",
+              "VIBECODING_INCLUDE_SCHEMAS": "true",
+              "VIBECODING_AUTO_UPDATE_README": "true"
+            }
+          }
+        }
+      }
+    },
+    "python-ml": {
+      "description": "Python 機器學習開發配置",
+      "config": {
+        "mcpServers": {
+          "vibecoding-context-manager": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/context-manager/index.js"]
+          },
+          "vibecoding-code-generator": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/code-generator/index.js"],
+            "env": {
+              "VIBECODING_DEFAULT_LANGUAGE": "python",
+              "VIBECODING_DEFAULT_FRAMEWORK": "fastapi",
+              "VIBECODING_ML_FRAMEWORK": "pytorch",
+              "VIBECODING_DATA_FRAMEWORK": "pandas",
+              "VIBECODING_NOTEBOOK_SUPPORT": "true"
+            }
+          },
+          "vibecoding-dependency-tracker": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/dependency-tracker/index.js"],
+            "env": {
+              "VIBECODING_DEFAULT_PACKAGE_MANAGER": "pip",
+              "VIBECODING_VIRTUAL_ENV": "true",
+              "VIBECODING_REQUIREMENTS_FORMAT": "poetry"
+            }
+          },
+          "vibecoding-test-validator": {
+            "command": "node",
+            "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/test-validator/index.js"],
+            "env": {
+              "VIBECODING_DEFAULT_TEST_FRAMEWORK": "pytest",
+              "VIBECODING_ML_TESTING": "true",
+              "VIBECODING_DATA_VALIDATION": "true"
+            }
+          }
+        }
+      }
+    }
+  },
+  "platform_specific_paths": {
+    "windows": {
+      "example": "C:\\Users\\YourName\\Projects\\vibeCoding-template\\dist\\vibe-services\\context-manager\\index.js",
+      "note": "在 Windows 上使用雙反斜線或正斜線"
+    },
+    "macos": {
+      "example": "/Users/YourName/Projects/vibeCoding-template/dist/vibe-services/context-manager/index.js",
+      "note": "macOS 使用標準 Unix 路徑格式"
+    },
+    "linux": {
+      "example": "/home/YourName/Projects/vibeCoding-template/dist/vibe-services/context-manager/index.js",
+      "note": "Linux 使用標準 Unix 路徑格式"
+    }
+  },
+  "environment_variables": {
+    "api_keys": {
+      "OPENAI_API_KEY": "你的 OpenAI API 金鑰",
+      "ANTHROPIC_API_KEY": "你的 Anthropic API 金鑰",
+      "GEMINI_API_KEY": "你的 Google Gemini API 金鑰"
+    },
+    "common_settings": {
+      "VIBECODING_DEFAULT_PROVIDER": "AI 提供者 (openai|anthropic|gemini|cursor)",
+      "VIBECODING_LOG_LEVEL": "日誌級別 (debug|info|warn|error)",
+      "VIBECODING_ENVIRONMENT": "環境 (development|staging|production)",
+      "VIBECODING_DEFAULT_LANGUAGE": "預設程式語言",
+      "VIBECODING_DEFAULT_FRAMEWORK": "預設框架"
+    }
+  },
+  "usage_instructions": {
+    "step1": "選擇適合你需求的配置範例",
+    "step2": "複製對應的 config 部分到你的 MCP 配置文件",
+    "step3": "替換路徑為你的實際專案路徑",
+    "step4": "設定必要的環境變數（如 API 金鑰）",
+    "step5": "重啟你的 MCP Host（Cursor、Claude Desktop 等）",
+    "step6": "驗證服務是否正常運作"
+  }
+} 

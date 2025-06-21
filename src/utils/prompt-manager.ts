@@ -5,7 +5,6 @@
 
 import { readFile } from 'fs/promises';
 import { join } from 'path';
-import { z } from 'zod';
 
 // Prompt 類型定義
 export interface PromptConfig {

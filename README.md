@@ -13,8 +13,7 @@ VibeCoding transforms traditional software development into an AI-guided, natura
 - [💻 Basic Usage](#-basic-usage)
 - [🔧 API Reference](#-api-reference)
 - [🤝 Integrations](#-integrations)
-- [📖 **新手必讀：IDE 設定完全指南**](IDE_SETUP_GUIDE.md) ⭐
-- [💻 **Cursor 用戶專用：API 金鑰說明**](CURSOR_MCP_CLARIFICATION.md) 🔥
+- [📖 Complete Setup Guides](#-complete-setup-guides)
 - [🏗️ Architecture](#-architecture)
 - [⚙️ Configuration](#-configuration)
 - [🎯 Advanced Usage](#-advanced-usage)
@@ -24,48 +23,35 @@ VibeCoding transforms traditional software development into an AI-guided, natura
 
 ### 🔥 一鍵自動設定 (最簡單)
 ```bash
-# 自動安裝並設定所有 IDE
-npm run setup
+# 在專案目錄中執行
+cd vibeCoding-template
+npm install && npm run build
 
-# 或
-npx vibecoding-system setup --auto-detect-ide
-```
-
-### Via NPX (推薦)
-```bash
-# Initialize new project
-npx vibecoding-system init --name "my-awesome-app"
-
-# Verify installation
+# 驗證安裝
 npm run test:prompts
 # Expected: 🎉 FULLY OPERATIONAL - All prompts are ready!
-
-# Start conversation-driven development
-npx vibecoding-system chat
 ```
 
-> **🆕 新手用戶？** 查看 [📖 IDE 設定完全指南](IDE_SETUP_GUIDE.md) 獲得超詳細的設定說明！
-
-### Via Git Clone
+### Via Git Clone (推薦)
 ```bash
 git clone https://github.com/vibecoding/vibecoding-template.git
-cd vibecoding-template
-npm install && npm run build:all
+cd vibeCoding-template
+npm install && npm run build
 ```
 
 ### 30-Second Demo
 ```bash
-# 1. Create project
-mkdir task-api && cd task-api
-npx vibecoding init --name "task-api"
+# 1. Clone and setup
+git clone https://github.com/vibecoding/vibecoding-template.git
+cd vibeCoding-template
+npm install && npm run build
 
-# 2. Start AI conversation
-npx vibecoding chat
-# Tell the system: "I need a task management REST API with user authentication"
+# 2. Verify all services are working
+npm run test:prompts
 
-# 3. Check generated structure
-ls -la
-# Result: Complete project structure with 5 development phases
+# 3. Check MCP services
+npm run mcp:context-manager
+# Press Ctrl+C to exit after verification
 ```
 
 ## 🌟 Features
@@ -92,36 +78,36 @@ ls -la
 - **Template System**: Rich template library with AI enhancement
 - **Hot Configuration**: Runtime provider switching without restart
 
+### 🆕 **New in This Version**
+- **Enhanced Project Management**: Complete project lifecycle with clarification process
+- **Auto-Documentation Generation**: PRD and implementation plans from conversations
+- **Improved Type System**: Robust TypeScript interfaces for all components
+- **Fixed MCP Services**: All 6 services now fully functional and deployable
+
 ## 📦 Installation
 
 ### Prerequisites
 - **Node.js**: >= 18.0.0
 - **npm**: >= 8.0.0
-- **AI Provider API Keys**: OpenAI, Anthropic, or Gemini (optional)
-
-### Install Globally
-```bash
-npm install -g vibecoding-system
-```
+- **AI Provider API Keys**: OpenAI, Anthropic, or Gemini (optional for basic usage)
 
 ### Install from Source
 ```bash
 # Clone and install
 git clone https://github.com/vibecoding/vibecoding-template.git
-cd vibecoding-template
+cd vibeCoding-template
 npm install
 
 # Build all services
-npm run build:all
+npm run build
 
 # Validate system
 npm run test:prompts
-npm run test:service-prompts
 ```
 
-### Configure AI Providers
+### Configure AI Providers (Optional)
 ```bash
-# Copy environment template
+# Copy environment template (if it exists)
 cp .env.example .env
 
 # Edit your API keys
@@ -145,66 +131,126 @@ GEMINI_MODEL=gemini-pro
 
 ## 💻 Basic Usage
 
-### Project Initialization
-```bash
-# Create new project
-vibecoding init --name "my-project" --description "My awesome application"
-
-# Project structure created:
-my-project/
+### Project Structure Overview
+After installation, your project will have this structure:
+```
+vibeCoding-template/
 ├── .vibecoding/           # VibeCoding configuration & prompts
 ├── 0_discovery/           # Requirements gathering
 ├── 1_design/             # System architecture
 ├── 2_implementation/     # Source code
 ├── 3_validation/         # Testing & quality
 ├── 4_deployment/         # Deployment configs
+├── vibe-services/        # MCP services source code
+├── dist/                 # Compiled MCP services
 └── knowledge-base/       # Patterns & solutions
 ```
 
-### Conversation-Driven Development
+### Using MCP Services in Your IDE
+
+#### Step 1: Build the Services
 ```bash
-# Start intelligent conversation
-vibecoding chat
-
-# Example conversation:
-🤖: "What would you like to build today?"
-👤: "A task management API with user authentication"
-
-🤖: "Great! Let me help you design this. What authentication method do you prefer?"
-👤: "JWT tokens with bcrypt password hashing"
-
-🤖: "Perfect! I'll generate an Express.js API with JWT middleware..."
+npm run build
 ```
 
-### Code Generation
+#### Step 2: Configure Your IDE
+See the [Complete Setup Guides](#-complete-setup-guides) section below for detailed IDE-specific instructions.
+
+#### Step 3: Start Using Services
+
+##### 🆕 **簡潔指令** (推薦)
 ```bash
-# Generate API code
-vibecoding generate api --framework express --ai openai
+# 🎯 項目管理
+@vibe start "我的項目"      # 開始新項目
+@vibe ask "答案"           # 回答澄清問題
+@vibe prd                 # 生成 PRD
 
-# Generate React frontend
-vibecoding generate frontend --framework react
+# 💻 代碼開發
+@vibe code "登入功能"      # 生成代碼
+@vibe api "用戶註冊"       # 生成 API
+@vibe fix "代碼"          # 重構代碼
 
-# Generate tests
-vibecoding test generate --type unit --coverage
+# 🧪 測試執行
+@vibe test               # 執行測試
+@vibe cover              # 檢查覆蓋率
+
+# 🚀 部署管理
+@vibe deploy             # 部署服務
 ```
 
-### Project Management
+##### 📝 **完整指令** (仍可使用)
 ```bash
-# Check project status
-vibecoding status
+@vibecoding-context-manager start-clarification
+@vibecoding-code-generator generate-code
+@vibecoding-test-validator run-tests
+```
 
-# Generate documentation
-vibecoding docs --type api
+> **💡 新指令系統**：我們重新設計了指令，平均減少 77% 的輸入量！查看 [指令重新設計文檔](VIBECODING_COMMAND_REDESIGN.md) 了解更多。
 
-# Deploy configuration
-vibecoding deploy --platform docker
+### Project Clarification Process
+
+#### 🆕 **簡潔指令** (推薦)
+```bash
+# 開始項目澄清
+@vibe start "任務管理系統"
+# 提供結構化問題來收集需求
+
+# 回答澄清問題
+@vibe ask "主要解決團隊協作和任務追蹤問題"
+# 系統引導完成 7 個標準澄清問題
+
+# 澄清完成後生成 PRD
+@vibe prd
+# 創建全面的產品需求文檔
+```
+
+#### 📝 **完整指令** (仍可使用)
+```bash
+# Start project clarification in your IDE
+@vibecoding-context-manager start-clarification
+# Provides structured questions to gather requirements
+
+# Provide clarification responses
+@vibecoding-context-manager provide-clarification
+# System guides through 7 standard clarification questions
+
+# Generate PRD after clarification
+@vibecoding-context-manager generate-prd
+# Creates comprehensive Product Requirements Document
 ```
 
 ## 🔧 API Reference
 
 ### Context Management Service
 
-#### `store_context`
+#### `start-clarification`
+Start a new project with guided clarification process.
+
+```json
+{
+  "projectName": "Task Management API",
+  "initialDescription": "RESTful API for task management with user authentication"
+}
+```
+
+#### `provide-clarification`
+Provide answers to clarification questions.
+
+```json
+{
+  "projectId": "project-abc123",
+  "questionIndex": 0,
+  "answer": "Helps teams organize and track their daily tasks efficiently"
+}
+```
+
+#### `generate-prd`
+Generate Product Requirements Document from clarifications.
+
+#### `generate-impl-plan`
+Generate detailed implementation plan.
+
+#### `store-context`
 Store conversation or project context for persistence across sessions.
 
 ```json
@@ -221,12 +267,9 @@ Store conversation or project context for persistence across sessions.
 }
 ```
 
-#### `get_ai_insight`
-Get AI-powered insights based on current context and query.
-
 ### Code Generation Service
 
-#### `generate_code`
+#### `generate-code`
 Generate code using AI or template-based approach.
 
 ```json
@@ -244,10 +287,10 @@ Generate code using AI or template-based approach.
 ```
 
 ### Other Services
-- **Dependency Tracker**: `analyze_dependencies`, `scan_vulnerabilities`, `update_dependencies`
-- **Test Validator**: `generate_tests`, `analyze_coverage`, `validate_quality`
-- **Doc Generator**: `generate_docs`, `create_api_docs`, `export_docs`
-- **Deployment Manager**: `generate_docker_config`, `create_ci_pipeline`, `setup_monitoring`
+- **Dependency Tracker**: `analyze-dependencies`, `security-scan`, `update-dependencies`
+- **Test Validator**: `run-tests`, `validate-coverage`, `performance-test`
+- **Doc Generator**: `generate-docs`, `create-api-docs`, `generate-changelog`
+- **Deployment Manager**: `deploy-service`, `setup-monitoring`, `rollback-deployment`
 
 ## 🤝 Integrations
 
@@ -257,9 +300,13 @@ Generate code using AI or template-based approach.
 ```json
 {
   "mcpServers": {
-    "vibecoding": {
-      "command": "npx",
-      "args": ["vibecoding-system", "mcp"]
+    "vibecoding-context-manager": {
+      "command": "node",
+      "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/context-manager/index.js"]
+    },
+    "vibecoding-code-generator": {
+      "command": "node",
+      "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/code-generator/index.js"]
     }
   }
 }
@@ -271,14 +318,40 @@ Generate code using AI or template-based approach.
 
 ```json
 {
-  "mcp.servers": {
-    "vibecoding": {
-      "command": "npx", 
-      "args": ["vibecoding-system", "mcp"]
+  "mcpServers": {
+    "vibecoding-context-manager": {
+      "command": "node",
+      "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/context-manager/index.js"]
+    },
+    "vibecoding-code-generator": {
+      "command": "node",
+      "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/code-generator/index.js"]
     }
-  },
-  "vibecoding.enabled": true,
-  "vibecoding.defaultProvider": "cursor"
+  }
+}
+```
+
+**Windows 路徑範例**:
+```json
+{
+  "mcpServers": {
+    "vibecoding-context-manager": {
+      "command": "node",
+      "args": ["C:\\Users\\YourName\\Projects\\vibeCoding-template\\dist\\vibe-services\\context-manager\\index.js"]
+    }
+  }
+}
+```
+
+**macOS/Linux 路徑範例**:
+```json
+{
+  "mcpServers": {
+    "vibecoding-context-manager": {
+      "command": "node",
+      "args": ["/Users/YourName/Projects/vibeCoding-template/dist/vibe-services/context-manager/index.js"]
+    }
+  }
 }
 ```
 
@@ -286,24 +359,90 @@ Generate code using AI or template-based approach.
 ```json
 {
   "mcp.servers": {
-    "vibecoding": {
-      "command": "npx",
-      "args": ["vibecoding-system", "mcp"]
+    "vibecoding-context-manager": {
+      "command": "node",
+      "args": ["/path/to/your/vibeCoding-template/dist/vibe-services/context-manager/index.js"]
     }
   }
 }
 ```
 
-### Cline / Continue
-```json
-{
-  "mcpServers": {
-    "vibecoding": {
-      "command": "vibecoding-system",
-      "args": ["mcp"]
-    }
-  }
-}
+## 📚 文檔導航
+
+### 🎯 設定指南（按順序閱讀）
+1. **[IDE 設定完全指南](IDE_SETUP_GUIDE.md)** - 主要設定文檔，支援所有 MCP Host
+2. **[Cursor MCP 專用說明](CURSOR_MCP_CLARIFICATION.md)** - Cursor 用戶必讀，API 金鑰需求說明
+3. **[MCP 設定指南](MCP_SETUP_GUIDE.md)** - 深度配置和故障排除
+4. **[部署指南](DEPLOY_MCP_GUIDE.md)** - 生產環境部署
+
+### 🛠️ 工具參考
+- **[完整工具參考手冊](VIBECODING_TOOLS_REFERENCE.md)** - 所有 34+ 工具的詳細說明和範例
+- **[簡潔指令系統](VIBECODING_COMMAND_REDESIGN.md)** - 🆕 基於 UX 的全新指令設計，減少 77% 輸入量
+- **[MCP 配置範例集合](mcp-config-examples.json)** - 🆕 各種場景的完整配置範例
+
+### 🏗️ 專案結構
+- **[資料夾結構說明](folder_structure.md)** - 專案架構和檔案組織
+
+### 📋 文檔連貫性說明
+
+**🔗 設定路徑一致性**：
+- 所有文檔使用統一的路徑格式：`/path/to/your/vibeCoding-template/dist/vibe-services/{service}/index.js`
+- 支援 Windows (`C:\Users\...`) 和 macOS/Linux (`/Users/...`) 的具體範例
+- 移除了所有硬編碼的 `D:\` 路徑
+
+**🎯 MCP Host 支援**：
+- **Cursor IDE**：內建 LLM，無需 API 金鑰（推薦）
+- **Claude Desktop**：原生 MCP 支援，需要 API 金鑰
+- **VSCode**：需要 MCP 擴展，需要 API 金鑰
+- **其他工具**：通用 MCP 配置格式
+
+**🛠️ 工具名稱統一**：
+- `start-clarification`（不是 start-project-clarification）
+- `generate-prd`（不是 generate-project-prd）
+- `generate-impl-plan`（不是 generate-project-implementation-plan）
+
+**📝 範例完整性**：
+- 每個專屬工具都有詳細的使用範例
+- 包含參數範例和預期回應
+- 提供完整的開發流程示範
+
+## 📖 Complete Setup Guides
+
+### 🎯 新手必讀文檔
+- **[IDE 設定完全指南](IDE_SETUP_GUIDE.md)** - 超詳細的 IDE 設定說明，適合任何技能水平
+- **[Cursor MCP 說明](CURSOR_MCP_CLARIFICATION.md)** - Cursor 用戶專用，解釋為什麼不需要額外 API 金鑰
+- **[MCP 服務設置指南](MCP_SETUP_GUIDE.md)** - 完整的 MCP 服務配置說明
+- **[部署完成指南](DEPLOY_MCP_GUIDE.md)** - 確認所有服務已正確部署
+
+### 📋 系統需求
+- **Node.js**: >= 18.0.0
+- **npm**: >= 8.0.0
+- **操作系統**: Windows 10/11, macOS, Linux
+- **記憶體**: >= 4GB RAM
+- **硬碟空間**: >= 1GB
+
+### 📚 **完整文檔集**
+- **[VIBECODING_TOOLS_REFERENCE.md](VIBECODING_TOOLS_REFERENCE.md)** - 🆕 完整工具參考手冊，包含所有 6 個服務的詳細工具列表
+- **[IDE_SETUP_GUIDE.md](IDE_SETUP_GUIDE.md)** - 詳細的 IDE 整合指南，適用於所有平台
+- **[CURSOR_MCP_CLARIFICATION.md](CURSOR_MCP_CLARIFICATION.md)** - Cursor 專用設定和 API 金鑰說明
+- **[MCP_SETUP_GUIDE.md](MCP_SETUP_GUIDE.md)** - MCP 服務配置和故障排除
+- **[DEPLOY_MCP_GUIDE.md](DEPLOY_MCP_GUIDE.md)** - 部署完成驗證指南
+- **[folder_structure.md](folder_structure.md)** - 項目結構和文件組織說明
+
+### ⚡ 5 分鐘快速體驗
+```bash
+# 1. Clone 專案
+git clone https://github.com/vibecoding/vibecoding-template.git
+cd vibeCoding-template
+
+# 2. 安裝和建構
+npm install && npm run build
+
+# 3. 驗證系統
+npm run test:prompts
+
+# 4. 配置你的 IDE (參考上面的 Integrations 部分)
+# 5. 開始使用 VibeCoding！
 ```
 
 ## 🏗️ Architecture
@@ -336,6 +475,26 @@ Located in `.vibecoding/prompts/`, this system provides intelligent guidance:
 4_deployment/    → Deployment configurations
 knowledge-base/  → Patterns, solutions, and retrospectives
 ```
+
+### 🎯 為什麼所有服務都有 start-session 和 get-ai-insight？
+
+基於 **智能協作機制** 的設計理念：
+
+#### 1. **統一的會話管理** (`start-session`)
+- **🔄 上下文連續性**：確保每個服務都能接入同一個開發會話
+- **📊 狀態同步**：所有服務都能訪問相同的項目狀態和決策記錄
+- **🤝 服務協作**：不同服務可以在同一個會話中無縫協作
+
+#### 2. **統一的 AI 洞察系統** (`get-ai-insight`)
+- **🧠 智能建議**：每個服務都能基於當前上下文提供專業的 AI 建議
+- **📈 階段感知**：根據開發階段提供相應建議
+- **🎯 專業化回應**：雖然是共同工具，但每個服務會根據自己的專業領域提供不同的洞察
+
+這種設計確保了：
+- ✅ **一致性**：所有服務都有統一的基礎操作
+- ✅ **專業性**：每個服務在自己領域內提供專業建議
+- ✅ **協作性**：服務間可以無縫協作和信息共享
+- ✅ **可擴展性**：新增服務只需實作基礎接口即可整合
 
 ## ⚙️ Configuration
 
@@ -380,26 +539,25 @@ knowledge-base/  → Patterns, solutions, and retrospectives
 
 ### Custom Prompt Development
 ```bash
-# Create custom prompt
-vibecoding prompt create --service code-generator --name custom-prompt
+# Test prompt system
+npm run test:prompts
 
-# Test prompt effectiveness
-vibecoding prompt test --prompt-id custom-prompt
-
-# Deploy to production
-vibecoding prompt deploy --prompt-id custom-prompt
+# Validate service prompts
+node scripts/test-prompts.js
 ```
 
-### Multi-Project Management
+### Multi-Service Usage
 ```bash
-# Switch between projects
-vibecoding workspace switch project-name
+# Build all services
+npm run build
 
-# Clone project structure
-vibecoding clone --template project-a --name project-b
-
-# Sync context across projects
-vibecoding context sync --from project-a --to project-b
+# Test individual services
+npm run mcp:context-manager
+npm run mcp:code-generator
+npm run mcp:dependency-tracker
+npm run mcp:test-validator
+npm run mcp:doc-generator
+npm run mcp:deployment-manager
 ```
 
 ### Docker Deployment
@@ -430,82 +588,93 @@ npm run test:prompts
 # Test service integration
 npm run test:service-prompts
 
-# Run all tests
-npm test
+# Build and verify all services
+npm run build
 
-# End-to-end testing
-npm run test:e2e
+# Test individual MCP services
+npm run mcp:context-manager
+# Press Ctrl+C to exit after verification
 ```
 
 ## 🔍 Troubleshooting
 
 ### Common Issues
 
-**Q: VibeCoding initialization fails**
+**Q: VibeCoding 初始化失敗**
 ```bash
-# Check Node.js version
-node --version  # Should be >= 18.0.0
+# 檢查 Node.js 版本
+node --version  # 應該 >= 18.0.0
 
-# Clear npm cache and reinstall
-npm cache clean --force && npm install
+# 清除 npm 緩存
+npm cache clean --force
+
+# 重新安裝
+npm install
 ```
 
-**Q: Prompt System issues**
+**Q: MCP 伺服器無法啟動**
 ```bash
-# Validate prompt system
+# 確保已建構服務
+npm run build
+
+# 檢查建構檔案是否存在
+ls -la dist/vibe-services/
+
+# 測試特定服務
+npm run mcp:context-manager
+```
+
+**Q: Prompt 系統問題**
+```bash
+# 驗證 Prompt 系統完整性
 npm run test:prompts
 
-# Check specific service prompt
-node scripts/test-prompts.js
+# 檢查 Prompt 文件
+ls -la .vibecoding/prompts/
 
-# Reload prompt cache
-vibecoding service restart --prompt-reload
+# 重新建構
+npm run build
 ```
 
-**Q: AI provider connection fails**
+**Q: 路徑配置問題**
 ```bash
-# Check API keys
-vibecoding config show
+# 確認專案路徑
+pwd
 
-# Test connection
-curl -I https://api.openai.com
-
-# Reset configuration
-vibecoding config reset
+# 使用絕對路徑
+# Windows: C:\Users\YourName\Projects\vibeCoding-template\dist\...
+# macOS/Linux: /Users/YourName/Projects/vibeCoding-template/dist/...
 ```
+
+### 獲取幫助
+- 📖 **完整文檔**: [docs.vibecoding.com](https://docs.vibecoding.com)
+- 💬 **社群支援**: [discord.gg/vibecoding](https://discord.gg/vibecoding)  
+- 🐛 **問題回報**: [github.com/vibecoding/issues](https://github.com/vibecoding/issues)
 
 ## 🤝 Contributing
 
-We welcome contributions! Please read our [Contributing Guide](CONTRIBUTING.md) for details.
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
 ### Development Setup
 ```bash
 # Clone repository
 git clone https://github.com/vibecoding/vibecoding-template.git
+cd vibeCoding-template
 
 # Install dependencies
 npm install
 
-# Set up development environment
-npm run dev:setup
+# Build services
+npm run build
 
-# Run development suite
-npm run dev
+# Run tests
+npm run test:prompts
 ```
 
-## 📄 License
+## 📝 License
 
-MIT - see [LICENSE](LICENSE) for details.
-
-## 🔗 Links
-
-- **📖 Complete Documentation**: [docs.vibecoding.dev](https://docs.vibecoding.dev)
-- **💬 Community Support**: [discord.gg/vibecoding](https://discord.gg/vibecoding)  
-- **🐛 Issue Tracker**: [GitHub Issues](https://github.com/vibecoding/vibecoding-template/issues)
-- **📦 NPM Package**: [vibecoding-system](https://www.npmjs.com/package/vibecoding-system)
-- **🔧 MCP Protocol**: [modelcontextprotocol.io](https://modelcontextprotocol.io/)
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-**Built with ❤️ by the VibeCoding Team**  
-*Transforming Development, One Conversation at a Time* 🚀 
+**🚀 現在你可以開始享受 AI 驅動的對話式開發體驗了！** 

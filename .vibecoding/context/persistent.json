@@ -1,0 +1,16 @@
+{
+  "projects": {
+    "project-nzk1r4ne": {
+      "id": "project-nzk1r4ne",
+      "name": "Test Task Manager",
+      "description": "A simple task management application for testing the clarification flow",
+      "clarificationResponses": [],
+      "phases": [],
+      "techStack": {},
+      "decisions": [],
+      "preferences": {},
+      "createdAt": "2025-06-21T14:57:58.116Z",
+      "updatedAt": "2025-06-21T14:57:58.116Z"
+    }
+  }
+}

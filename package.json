@@ -17,7 +17,15 @@
     "setup:quick": "node scripts/easy-setup.js",
     "lint": "eslint src/**/*.ts",
     "format": "prettier --write \"src/**/*.ts\"",
-    "vibecoding": "tsx src/cli/index.ts"
+    "vibecoding": "tsx src/cli/index.ts",
+    "mcp:context-manager": "tsx vibe-services/context-manager/index.ts",
+    "mcp:code-generator": "tsx vibe-services/code-generator/index.ts",
+    "mcp:dependency-tracker": "tsx vibe-services/dependency-tracker/index.ts",
+    "mcp:test-validator": "tsx vibe-services/test-validator/index.ts",
+    "mcp:doc-generator": "tsx vibe-services/doc-generator/index.ts",
+    "mcp:deployment-manager": "tsx vibe-services/deployment-manager/index.ts",
+    "verify": "powershell -ExecutionPolicy Bypass -File scripts/verify-structure.ps1",
+    "clean": "powershell -ExecutionPolicy Bypass -File scripts/cleanup.ps1"
   },
   "keywords": [
     "mcp",
