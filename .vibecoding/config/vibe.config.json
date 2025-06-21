@@ -1,0 +1,55 @@
+{
+  "version": "1.0.0",
+  "projectName": "vibeCoding System",
+  "description": "Conversation-driven development framework for rapid MVP/POC creation",
+  "services": {
+    "contextManager": {
+      "enabled": true,
+      "persistentStorage": ".vibecoding/context",
+      "sessionTimeout": 86400,
+      "maxHistorySize": 1000
+    },
+    "codeGenerator": {
+      "enabled": true,
+      "aiProvider": "anthropic",
+      "model": "claude-4-sonnet",
+      "temperature": 0.7
+    },
+    "dependencyTracker": {
+      "enabled": true,
+      "autoUpdate": true,
+      "vulnerabilityScanning": true
+    },
+    "testValidator": {
+      "enabled": true,
+      "coverage": {
+        "threshold": 80,
+        "enforceThreshold": false
+      }
+    },
+    "docGenerator": {
+      "enabled": true,
+      "autoGenerate": true,
+      "formats": ["markdown", "html", "pdf"]
+    },
+    "deploymentManager": {
+      "enabled": true,
+      "environments": ["development", "staging", "production"],
+      "cicdProvider": "github-actions"
+    }
+  },
+  "workflow": {
+    "phases": [
+      "discovery",
+      "design",
+      "implementation",
+      "validation",
+      "deployment"
+    ],
+    "autoProgressTracking": true
+  },
+  "knowledgeBase": {
+    "autoCapture": true,
+    "categories": ["patterns", "solutions", "retrospectives"]
+  }
+} 
