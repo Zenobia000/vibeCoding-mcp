@@ -27,7 +27,7 @@
 ## 🔄 與其他服務協作
 
 ### Code Generator
-```typescript
+```{{ 代碼語言 }}
 // 分析生成代碼的依賴需求
 async analyzeCodeDependencies(code: GeneratedCode): Promise<DependencyAnalysis> {
   const imports = this.extractImports(code);
@@ -42,7 +42,7 @@ async analyzeCodeDependencies(code: GeneratedCode): Promise<DependencyAnalysis> 
 ```
 
 ### Test Validator
-```typescript
+```{{ 代碼語言 }}
 // 檢查測試依賴
 async validateTestDependencies(): Promise<TestDependencyStatus> {
   return {
@@ -54,7 +54,7 @@ async validateTestDependencies(): Promise<TestDependencyStatus> {
 ```
 
 ### Deployment Manager
-```typescript
+```{{ 代碼語言 }}
 // 生產環境依賴檢查
 async validateProductionDependencies(): Promise<ProductionReadiness> {
   return {
@@ -68,7 +68,7 @@ async validateProductionDependencies(): Promise<ProductionReadiness> {
 ## 🎯 分析策略
 
 ### 依賴風險評估
-```typescript
+```{{ 代碼語言 }}
 interface DependencyRisk {
   package: string;
   version: string;
@@ -83,7 +83,7 @@ interface DependencyRisk {
 ```
 
 ### 版本策略建議
-```typescript
+```{{ 代碼語言 }}
 const VERSION_STRATEGIES = {
   conservative: "使用穩定版本，避免 beta 和 rc 版本",
   balanced: "使用最新穩定版本，謹慎升級主版本",
@@ -125,10 +125,10 @@ const VERSION_STRATEGIES = {
 ### 包大小分析
 - **總大小**: 2.3MB (目標: <2MB) ⚠️
 - **gzip後**: 680KB ✅
-- **最大依賴**: moment.js (67KB)
+- **最大依賴**: {{ 大型依賴套件 }} ({{ 大小 }})
 
 ### 🔧 優化建議
-1. **替換 moment.js**: 使用 day.js 可減少 85% 大小
+1. **替換大型依賴**: 使用輕量級替代方案可大幅減少大小
 2. **按需導入**: lodash 改為按需導入可減少 40% 大小
 3. **懶加載**: 將圖表庫設為按需加載
 
@@ -146,25 +146,25 @@ const VERSION_STRATEGIES = {
 🔍 **發現的問題**
 - axios 存在已知安全漏洞 (CVE-2021-3749)
 - lodash 版本過期，建議升級
-- moment.js 體積較大，影響性能
+- {{ 特定依賴 }} 體積較大，影響性能
 
 🚀 **即時修復命令**
 ```bash
 # 修復安全漏洞
-npm update axios
+{{ 升級依賴命令 }}
 
 # 優化包大小
-npm install day.js
-npm uninstall moment
+{{ 安裝替代方案命令 }}
+{{ 移除大型依賴命令 }}
 
 # 更新過期依賴
-npm update lodash
+{{ 更新依賴命令 }}
 ```
 
 💡 **長期建議**
-1. 設置 dependabot 自動更新
+1. 設置自動依賴更新機制
 2. 定期進行依賴審計
-3. 考慮使用 npm audit fix
+3. 考慮使用依賴掃描工具
 
 🔄 **下一步**
 我已經準備好協助你實施這些修復。需要我生成遷移腳本嗎？
@@ -192,7 +192,7 @@ npm update lodash
 🔧 **自動修復**
 執行以下命令進行自動修復：
 ```bash
-npm audit fix --force
+{{ 自動修復命令 }}
 ```
 
 📋 **修復後驗證**

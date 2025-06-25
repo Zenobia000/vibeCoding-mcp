@@ -41,24 +41,24 @@
 ## 🔄 與其他服務的協作
 
 ### Code Generator 服務
-```typescript
+```{{ 代碼語言 }}
 // 為代碼生成提供技術棧上下文
-const techContext = await getProjectContext('techStack');
-const previousDecisions = await getDecisionHistory('architecture');
+{{ 獲取技術棧上下文代碼 }}
+{{ 獲取架構決策歷史代碼 }}
 ```
 
 ### Test Validator 服務
-```typescript
+```{{ 代碼語言 }}
 // 提供測試策略和質量標準上下文
-const testingContext = await getProjectContext('testingStrategy');
-const qualityStandards = await getProjectContext('qualityStandards');
+{{ 獲取測試策略上下文代碼 }}
+{{ 獲取品質標準上下文代碼 }}
 ```
 
 ### Documentation 服務
-```typescript
+```{{ 代碼語言 }}
 // 提供項目歷史和決策背景
-const projectHistory = await getConversationHistory('design');
-const decisionRationale = await getDecisionHistory('all');
+{{ 獲取項目歷史代碼 }}
+{{ 獲取決策理由代碼 }}
 ```
 
 ## 📊 上下文數據結構
@@ -81,7 +81,7 @@ const decisionRationale = await getDecisionHistory('all');
 {
   "projectId": "uuid",
   "name": "項目名稱",
-  "techStack": { "frontend": "React", "backend": "Node.js" },
+  "techStack": { "frontend": "{{ 前端框架 }}", "backend": "{{ 後端框架 }}" },
   "architecture": "微服務架構",
   "currentPhase": "implementation",
   "keyPersonnel": ["角色1", "角色2"],

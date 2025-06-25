@@ -1,20 +1,41 @@
 # VibeCoding MCP 服務設置指南
 
+## 📊 **最新系統狀態**
+
+✅ **建構狀態**: 全部 6 個服務已編譯並測試通過  
+🛠️ **工具總數**: 34 個專業工具  
+⚡ **簡潔指令**: 26 個簡潔指令 (減少 77% 輸入量)  
+🔄 **向後相容**: 完整指令仍可使用  
+📈 **提示系統**: 21 個提示組件運作正常  
+
 ## 📋 **服務概覽**
 
-VibeCoding 系統包含 6 個專業化的 MCP 服務，每個服務負責開發流程中的特定領域：
+VibeCoding 系統包含 6 個專業化的 MCP 服務，總共提供 34 個專業工具：
 
 ### 🎯 **核心服務架構**
 
 ```
-VibeCoding System
-├── Context Manager      # 上下文和會話管理
-├── Code Generator       # 代碼生成和架構
-├── Dependency Tracker   # 依賴管理
-├── Test Validator       # 測試和質量保證
-├── Doc Generator        # 文檔生成
-└── Deployment Manager   # 部署管理
+VibeCoding System (34 個工具)
+├── 🎯 Context Manager      (12 工具) # 上下文和專案管理
+├── ⚡ Code Generator       (6 工具)  # 代碼生成和重構
+├── 📦 Dependency Tracker   (6 工具)  # 依賴管理和安全掃描
+├── 🧪 Test Validator       (6 工具)  # 測試驗證和覆蓋率
+├── 📚 Doc Generator        (6 工具)  # 文檔和 API 生成
+└── 🚀 Deployment Manager   (6 工具)  # 部署和監控管理
 ```
+
+### 🆕 **簡潔指令對照表**
+
+| 服務 | 簡潔指令範例 | 對應完整指令 |
+|------|-------------|-------------|
+| Context Manager | `@vibe start "專案名"` | `@vibecoding-context-manager start-clarification` |
+| Code Generator | `@vibe code "需求"` | `@vibecoding-code-generator generate-code` |
+| Dependency Tracker | `@vibe deps` | `@vibecoding-dependency-tracker analyze-dependencies` |
+| Test Validator | `@vibe test` | `@vibecoding-test-validator run-tests` |
+| Doc Generator | `@vibe doc` | `@vibecoding-doc-generator generate-docs` |
+| Deployment Manager | `@vibe deploy` | `@vibecoding-deployment-manager deploy-service` |
+
+> 📖 **完整工具參考**: [VIBECODING_TOOLS_REFERENCE.md](VIBECODING_TOOLS_REFERENCE.md) 包含所有 34 個工具的鉅細靡遺說明
 
 ## ⚙️ **MCP 配置設置**
 

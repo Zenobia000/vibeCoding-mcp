@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 /**
- * VibeCoding Context Manager MCP Server
- * 整合 Prompt 管理系統的上下文管理服務
+ * VibeCoding Code Generator MCP Server
+ * 整合 Prompt 管理系統的代碼生成服務
  */
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
@@ -13,9 +13,8 @@ import {
   ListToolsRequestSchema,
   McpError,
 } from '@modelcontextprotocol/sdk/types.js';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
-import { z } from 'zod';
 
 // 導入 Prompt 管理系統
 import { 
@@ -24,48 +23,49 @@ import {
   DevelopmentPhase,
 } from '../../src/utils/prompt-manager.js';
 
-// 導入核心類型
-import { 
-  Project
-} from '../../src/core/orchestrator.js';
-
-interface ConversationEntry {
-  id: string;
-  timestamp: Date;
-  phase: DevelopmentPhase;
-  speaker: 'user' | 'assistant' | 'system';
-  content: string;
-  metadata?: Record<string, any>;
+interface CodeGenerationRequest {
+  requirements: string;
+  language: string;
+  codeType: 'component' | 'service' | 'api' | 'utility' | 'model';
+  framework?: string;
+  context?: Record<string, any>;
 }
 
-// Use the Project type from orchestrator instead of ProjectContext
-// interface ProjectContext will be replaced by Project type
-
-interface SessionContext {
-  id: string;
-  startedAt: Date;
-  lastActivity: Date;
-  currentProject?: string;
-  conversationHistory: ConversationEntry[];
-  activeServices: string[];
-  userPreferences: Record<string, any>;
+interface CodeGenerationResult {
+  code: string;
+  explanation: string;
+  dependencies: string[];
+  testSuggestions: string[];
+  documentation: string;
 }
 
-class VibeContextManager {
+interface RefactorRequest {
+  code: string;
+  refactorType: 'performance' | 'readability' | 'structure' | 'security';
+  targetPattern?: string;
+  context?: Record<string, any>;
+}
+
+interface TestGenerationRequest {
+  code: string;
+  testType: 'unit' | 'integration' | 'e2e';
+  framework?: string;
+  context?: Record<string, any>;
+}
+
+interface CodeReviewRequest {
+  code: string;
+  focusAreas?: ('security' | 'performance' | 'maintainability' | 'best-practices')[];
+  context?: Record<string, any>;
+}
+
+class VibeCodeGenerator {
   private contextDir: string;
-  private persistentContextFile: string;
-  private sessionContextFile: string;
-  private currentSession: SessionContext | null = null;
-  private persistentContext: Map<string, any> = new Map();
-  private servicePrompt: string = '';
+  private currentSession: string | null = null;
 
   constructor() {
     this.contextDir = join(process.cwd(), '.vibecoding', 'context');
-    this.persistentContextFile = join(this.contextDir, 'persistent.json');
-    this.sessionContextFile = join(this.contextDir, 'session.json');
-    
     this.ensureContextDirectory();
-    this.loadPersistentContext();
     
     // 初始化 Prompt 系統
     this.initializePromptSystem();
@@ -76,57 +76,20 @@ class VibeContextManager {
    */
   private async initializePromptSystem(): Promise<void> {
     try {
-      // 載入 Context Manager 的完整 prompt
-      this.servicePrompt = await buildMCPServicePrompt(
-        ServiceId.CONTEXT_MANAGER,
-        this.getCurrentPhase(),
+      await buildMCPServicePrompt(
+        ServiceId.CODE_GENERATOR,
+        DevelopmentPhase.IMPLEMENTATION,
         {
-          projectContext: this.getProjectContext(),
-          sessionActive: !!this.currentSession
+          capabilities: ['code-generation', 'refactoring', 'testing', 'review'],
+          supportedLanguages: ['typescript', 'javascript', 'python', 'java', 'go', 'rust'],
+          supportedFrameworks: ['react', 'vue', 'angular', 'express', 'nestjs', 'fastapi', 'spring']
         }
       );
       
-      console.error('[Context Manager] Prompt system initialized successfully');
+      console.error('[Code Generator] Prompt system initialized successfully');
     } catch (error) {
-      console.error('[Context Manager] Failed to initialize prompt system:', error);
-      // 使用降級 prompt
-      this.servicePrompt = `你是 VibeCoding 上下文管理服務，負責維護項目和會話上下文。`;
+      console.error('[Code Generator] Failed to initialize prompt system:', error);
     }
-  }
-
-  /**
-   * 獲取當前開發階段
-   */
-  private getCurrentPhase(): DevelopmentPhase {
-    // For now, default to DISCOVERY phase
-    // TODO: Add phase tracking to Project type or derive from phases array
-    return DevelopmentPhase.DISCOVERY;
-  }
-
-  /**
-   * 獲取當前項目上下文
-   */
-  private getCurrentProject(): Project | null {
-    if (!this.currentSession?.currentProject) return null;
-    
-    const projects = this.persistentContext.get('projects') || {};
-    return projects[this.currentSession.currentProject] || null;
-  }
-
-  /**
-   * 獲取項目上下文摘要
-   */
-  getProjectContext(): Record<string, any> {
-    const project = this.getCurrentProject();
-    if (!project) return {};
-
-    return {
-      name: project.name,
-      phase: project.currentPhase || 'discovery',
-      techStack: project.techStack || {},
-      recentDecisions: project.decisions?.slice(-5) || [],
-      preferences: project.preferences || {}
-    };
   }
 
   private ensureContextDirectory(): void {
@@ -135,346 +98,542 @@ class VibeContextManager {
     }
   }
 
-  private loadPersistentContext(): void {
-    try {
-      if (existsSync(this.persistentContextFile)) {
-        const data = JSON.parse(readFileSync(this.persistentContextFile, 'utf-8'));
-        this.persistentContext = new Map(Object.entries(data));
-      }
-    } catch (error) {
-      console.error('Failed to load persistent context:', error);
-    }
-  }
-
-  private savePersistentContext(): void {
-    try {
-      const data = Object.fromEntries(this.persistentContext);
-      writeFileSync(this.persistentContextFile, JSON.stringify(data, null, 2));
-    } catch (error) {
-      console.error('Failed to save persistent context:', error);
-    }
-  }
-
-  private saveSessionContext(): void {
-    if (!this.currentSession) return;
-    
-    try {
-      writeFileSync(this.sessionContextFile, JSON.stringify(this.currentSession, null, 2));
-    } catch (error) {
-      console.error('Failed to save session context:', error);
-    }
-  }
-
   /**
-   * 開始新的會話
+   * 開始會話
    */
-  async startSession(projectId?: string): Promise<SessionContext> {
-    this.currentSession = {
-      id: `session_${Date.now()}`,
-      startedAt: new Date(),
-      lastActivity: new Date(),
-      currentProject: projectId,
-      conversationHistory: [],
-      activeServices: ['context-manager'],
-      userPreferences: {}
+  async startSession(): Promise<{ sessionId: string; message: string }> {
+    this.currentSession = `code-gen-session-${Date.now()}`;
+    
+    console.error(`[Code Generator] Session started: ${this.currentSession}`);
+    
+    return {
+      sessionId: this.currentSession,
+      message: '🚀 Code Generator 服務已啟動！可以開始生成代碼、重構或進行代碼審查。'
     };
-
-    // 重新初始化 prompt 系統以包含新的會話上下文
-    await this.initializePromptSystem();
-    
-    this.saveSessionContext();
-    return this.currentSession;
   }
 
   /**
-   * 添加對話記錄
+   * 生成代碼
    */
-  async addConversation(
-    speaker: 'user' | 'assistant' | 'system',
-    content: string,
-    metadata?: Record<string, any>
-  ): Promise<void> {
-    if (!this.currentSession) {
-      await this.startSession();
-    }
-
-    const entry: ConversationEntry = {
-      id: `conv_${Date.now()}`,
-      timestamp: new Date(),
-      phase: this.getCurrentPhase(),
-      speaker,
-      content,
-      metadata
-    };
-
-    this.currentSession!.conversationHistory.push(entry);
-    this.currentSession!.lastActivity = new Date();
+  async generateCode(request: CodeGenerationRequest): Promise<CodeGenerationResult> {
+    const { language, codeType, framework } = request;
     
-    // 如果是重要的對話，分析並提取關鍵信息
-    if (speaker === 'user' && this.isImportantConversation(content)) {
-      await this.analyzeAndExtractContext(content);
-    }
-
-    this.saveSessionContext();
+    console.error(`[Code Generator] Generating ${codeType} code in ${language}${framework ? ` using ${framework}` : ''}`);
+    
+    const result = await this.generateCodeTemplate(request);
+    
+    return result;
   }
 
   /**
-   * 判斷是否為重要對話
+   * 代碼模板生成器
    */
-  private isImportantConversation(content: string): boolean {
-    const importantKeywords = [
-      '需求', '要求', '功能', '架構', '技術棧', '數據庫', 
-      '部署', '測試', '性能', '安全', '決定', '選擇'
-    ];
+  private async generateCodeTemplate(request: CodeGenerationRequest): Promise<CodeGenerationResult> {
+    const { requirements, language, codeType, framework } = request;
     
-    return importantKeywords.some(keyword => content.includes(keyword));
-  }
+    let code = '';
+    let explanation = '';
+    let dependencies: string[] = [];
+    let testSuggestions: string[] = [];
+    let documentation = '';
 
-  /**
-   * 分析對話並提取上下文信息
-   */
-  private async analyzeAndExtractContext(content: string): Promise<void> {
-    // 這裡可以使用 AI 來分析對話內容並提取關鍵信息
-    // 目前使用簡單的關鍵詞匹配
-
-    // 提取技術棧信息
-    const techStackKeywords = {
-      'React': 'frontend',
-      'Vue': 'frontend', 
-      'Angular': 'frontend',
-      'Node.js': 'backend',
-      'Express': 'backend',
-      'NestJS': 'backend',
-      'PostgreSQL': 'database',
-      'MongoDB': 'database',
-      'MySQL': 'database'
-    };
-
-    const project = this.getCurrentProject();
-    if (project) {
-      for (const [tech, category] of Object.entries(techStackKeywords)) {
-        if (content.toLowerCase().includes(tech.toLowerCase())) {
-          if (!project.techStack) project.techStack = {};
-          project.techStack[category] = tech;
+    switch (codeType) {
+      case 'component':
+        if (language === 'typescript' && framework === 'react') {
+          code = this.generateReactComponent(requirements);
+          dependencies = ['react', '@types/react'];
+          testSuggestions = ['測試組件渲染', '測試 props 傳遞', '測試事件處理'];
+        } else if (language === 'typescript' && framework === 'vue') {
+          code = this.generateVueComponent(requirements);
+          dependencies = ['vue'];
+          testSuggestions = ['測試組件掛載', '測試響應式數據', '測試事件觸發'];
         }
-      }
-      
-      // 更新項目上下文
-      this.updateProjectContext(project);
+        explanation = `生成了一個 ${framework} ${codeType}，基於需求：${requirements}`;
+        break;
+
+      case 'service':
+        if (language === 'typescript' && framework === 'express') {
+          code = this.generateExpressService(requirements);
+          dependencies = ['express', '@types/express'];
+          testSuggestions = ['測試 API 端點', '測試錯誤處理', '測試數據驗證'];
+        } else if (language === 'python' && framework === 'fastapi') {
+          code = this.generateFastAPIService(requirements);
+          dependencies = ['fastapi', 'uvicorn'];
+          testSuggestions = ['測試 API 響應', '測試請求驗證', '測試異常處理'];
+        }
+        explanation = `生成了一個 ${framework} 服務，實現功能：${requirements}`;
+        break;
+
+      case 'utility':
+        code = this.generateUtilityFunction(requirements, language);
+        explanation = `生成了一個實用工具函數：${requirements}`;
+        testSuggestions = ['測試邊界條件', '測試錯誤輸入', '測試性能'];
+        break;
+
+      default:
+        code = `// TODO: 實現 ${codeType} 代碼生成\n// 需求：${requirements}`;
+        explanation = `需要實現 ${codeType} 類型的代碼生成器`;
     }
-  }
 
-  /**
-   * 記錄重要決策
-   */
-  async recordDecision(decision: {
-    decision: string;
-    rationale: string;
-    impact: string;
-    service: string;
-  }): Promise<void> {
-    const project = this.getCurrentProject();
-    if (!project) return;
+    documentation = this.generateDocumentation(requirements, codeType);
 
-    const decisionRecord = {
-      id: `decision_${Date.now()}`,
-      timestamp: new Date(),
-      ...decision
+    return {
+      code,
+      explanation,
+      dependencies,
+      testSuggestions,
+      documentation
     };
-
-    if (!project.decisions) project.decisions = [];
-    project.decisions.push(decisionRecord);
-    this.updateProjectContext(project);
-
-    // 記錄為系統對話
-    await this.addConversation('system', `記錄決策: ${decision.decision}`, {
-      type: 'decision',
-      data: decisionRecord
-    });
   }
 
-  /**
-   * 更新項目上下文
-   */
-  private updateProjectContext(project: Project): void {
-    const projects = this.persistentContext.get('projects') || {};
-    projects[project.id] = project;
-    this.persistentContext.set('projects', projects);
-    this.savePersistentContext();
-  }
+  private generateReactComponent(requirements: string): string {
+    return `import React from 'react';
 
-  /**
-   * 獲取相關歷史對話
-   */
-  getRelevantHistory(query: string, limit: number = 10): ConversationEntry[] {
-    if (!this.currentSession) return [];
-
-    // 簡單的相關性匹配 - 可以用更智能的算法改進
-    const keywords = query.toLowerCase().split(' ');
-    
-    return this.currentSession.conversationHistory
-      .filter(entry => {
-        const content = entry.content.toLowerCase();
-        return keywords.some(keyword => content.includes(keyword));
-      })
-      .slice(-limit);
-  }
-
-  /**
-   * 生成上下文摘要
-   */
-  generateContextSummary(): string {
-    const project = this.getCurrentProject();
-    const session = this.currentSession;
-
-    if (!project || !session) {
-      return "📊 **當前無活躍項目或會話**\n\n使用 `start-session` 開始新的開發會話。";
-    }
-
-    const recentConversations = session.conversationHistory.slice(-5);
-    const recentDecisions = project.decisions?.slice(-3) || [];
-
-    return `📊 **項目上下文摘要**
-
-🎯 **項目**: ${project.name}
-📋 **階段**: ${project.currentPhase}
-🏗️ **技術棧**: ${Object.entries(project.techStack || {}).map(([k, v]) => `${k}: ${v}`).join(', ') || '未設定'}
-
-📈 **會話狀態**
-- 開始時間: ${session.startedAt.toLocaleString()}
-- 對話數量: ${session.conversationHistory.length}
-- 活躍服務: ${session.activeServices.join(', ')}
-
-🔄 **最近決策**
-${recentDecisions.map((d: any) => `- ${d.decision} (${d.service})`).join('\n') || '暫無決策記錄'}
-
-💬 **最近對話重點**
-${recentConversations.map(c => `- ${c.speaker}: ${c.content.substring(0, 100)}...`).join('\n') || '暫無對話記錄'}
-
-🎯 **建議下一步**
-基於當前階段 (${project.currentPhase})，建議專注於相關的開發活動。`;
-  }
-
-  /**
-   * 使用 AI 提供智能建議 (基於 prompt 系統)
-   */
-  async getAIInsight(query: string): Promise<string> {
-    const context = {
-      query,
-      projectContext: this.getProjectContext(),
-      recentHistory: this.getRelevantHistory(query, 5),
-      currentPhase: this.getCurrentPhase(),
-      servicePrompt: this.servicePrompt
-    };
-
-    // 這裡實際應用中會調用 AI API
-    // 目前返回基於 prompt 的模擬響應
-    
-    if (query.includes('建議') || query.includes('下一步')) {
-      return this.generatePhaseBasedSuggestions();
-    }
-    
-    if (query.includes('問題') || query.includes('困難')) {
-      return this.generateProblemSolvingSuggestions();
-    }
-
-    return `🧠 **AI 分析建議**
-
-基於你的問題「${query}」和當前項目上下文，我建議：
-
-📋 **相關歷史**
-${context.recentHistory.length > 0 ? 
-  context.recentHistory.map(h => `- ${h.content.substring(0, 80)}...`).join('\n') :
-  '暫無相關歷史記錄'
+interface Props {
+  // TODO: 定義 props 類型
 }
 
-💡 **建議**
-根據當前 ${context.currentPhase} 階段，建議你：
-1. 檢查相關的項目決策和約束
-2. 考慮與其他 VibeCoding 服務協作
-3. 記錄重要決策以供後續參考
+export const Component: React.FC<Props> = (props) => {
+  // 基於需求實現：${requirements}
+  
+  return (
+    <div>
+      {/* TODO: 實現組件 UI */}
+    </div>
+  );
+};
 
-需要更具體的幫助嗎？我可以協調其他專業服務來協助你。`;
+export default Component;`;
+  }
+
+  private generateVueComponent(requirements: string): string {
+    return `<template>
+  <div>
+    <!-- TODO: 實現組件模板 -->
+    <!-- 基於需求：${requirements} -->
+  </div>
+</template>
+
+<script setup lang="ts">
+// TODO: 實現組件邏輯
+</script>
+
+<style scoped>
+/* TODO: 實現組件樣式 */
+</style>`;
+  }
+
+  private generateExpressService(requirements: string): string {
+    return `import express from 'express';
+
+const router = express.Router();
+
+// 基於需求實現：${requirements}
+router.get('/', (req, res) => {
+  try {
+    // TODO: 實現 GET 端點邏輯
+    res.json({ message: 'Service is working' });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.post('/', (req, res) => {
+  try {
+    // TODO: 實現 POST 端點邏輯
+    res.json({ message: 'Created successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+export default router;`;
+  }
+
+  private generateFastAPIService(requirements: string): string {
+    return `from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
+app = FastAPI()
+
+# 基於需求實現：${requirements}
+
+class ItemModel(BaseModel):
+    # TODO: 定義數據模型
+    pass
+
+@app.get("/")
+async def read_root():
+    """根端點"""
+    return {"message": "Service is working"}
+
+@app.post("/items/")
+async def create_item(item: ItemModel):
+    """創建項目"""
+    try:
+        # TODO: 實現創建邏輯
+        return {"message": "Item created successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Internal server error")`;
+  }
+
+  private generateUtilityFunction(requirements: string, language: string): string {
+    if (language === 'typescript' || language === 'javascript') {
+      return `/**
+ * ${requirements}
+ */
+export function utilityFunction(input: any): any {
+  // TODO: 實現工具函數邏輯
+  return input;
+}
+
+export default utilityFunction;`;
+    } else if (language === 'python') {
+      return `"""
+${requirements}
+"""
+
+def utility_function(input_value):
+    """
+    TODO: 實現工具函數邏輯
+    """
+    return input_value`;
+    }
+    
+    return `// TODO: 實現 ${language} 工具函數\n// 需求：${requirements}`;
+  }
+
+  private generateDocumentation(requirements: string, codeType: string): string {
+    return `# ${codeType.charAt(0).toUpperCase() + codeType.slice(1)} Documentation
+
+## 需求
+${requirements}
+
+## 實現概述
+此 ${codeType} 基於提供的需求自動生成。
+
+## 使用方法
+\`\`\`
+// TODO: 添加使用示例
+\`\`\`
+
+## 注意事項
+- 請根據實際需求調整代碼
+- 建議添加錯誤處理和數據驗證
+- 考慮性能和安全性優化
+
+## 下一步
+1. 完善實現邏輯
+2. 添加單元測試
+3. 更新文檔
+`;
   }
 
   /**
-   * 生成階段特定建議
+   * 重構代碼
    */
-  private generatePhaseBasedSuggestions(): string {
-    const phase = this.getCurrentPhase();
-    const suggestions = {
-      [DevelopmentPhase.DISCOVERY]: [
-        "明確核心功能需求",
-        "識別目標用戶群體", 
-        "定義成功指標",
-        "收集業務約束"
+  async refactorCode(request: RefactorRequest): Promise<{
+    refactoredCode: string;
+    explanation: string;
+    improvements: string[];
+    risks: string[];
+  }> {
+    const { code, refactorType } = request;
+    
+    console.error(`[Code Generator] Refactoring code for ${refactorType}`);
+    
+    let refactoredCode = code;
+    let explanation = '';
+    let improvements: string[] = [];
+    let risks: string[] = [];
+
+    switch (refactorType) {
+      case 'performance':
+        improvements = [
+          '優化循環和數據結構',
+          '減少不必要的計算',
+          '使用緩存機制',
+          '優化數據庫查詢'
+        ];
+        explanation = '針對性能進行了重構優化';
+        break;
+
+      case 'readability':
+        improvements = [
+          '改善變數和函數命名',
+          '添加註釋和文檔',
+          '分解複雜函數',
+          '統一代碼格式'
+        ];
+        explanation = '提升了代碼可讀性';
+        break;
+
+      case 'structure':
+        improvements = [
+          '重新組織代碼結構',
+          '應用設計模式',
+          '分離關注點',
+          '減少耦合度'
+        ];
+        explanation = '改善了代碼架構和結構';
+        break;
+
+      case 'security':
+        improvements = [
+          '添加輸入驗證',
+          '防止 SQL 注入',
+          '加強權限控制',
+          '安全的錯誤處理'
+        ];
+        explanation = '增強了代碼安全性';
+        risks = ['需要測試新的安全措施', '可能影響現有功能'];
+        break;
+    }
+
+    return {
+      refactoredCode,
+      explanation,
+      improvements,
+      risks
+    };
+  }
+
+  /**
+   * 生成測試代碼
+   */
+  async generateTests(request: TestGenerationRequest): Promise<{
+    testCode: string;
+    testCases: string[];
+    framework: string;
+    coverage: string[];
+  }> {
+    const { testType, framework = 'jest' } = request;
+    
+    console.error(`[Code Generator] Generating ${testType} tests using ${framework}`);
+    
+    const testCode = this.generateTestTemplate(testType, framework);
+    const testCases = this.generateTestCases(testType);
+    const coverage = this.generateCoverageAreas();
+
+    return {
+      testCode,
+      testCases,
+      framework,
+      coverage
+    };
+  }
+
+  private generateTestTemplate(testType: string, framework: string): string {
+    if (framework === 'jest') {
+      return `import { describe, test, expect } from '@jest/globals';
+
+describe('${testType} tests', () => {
+  test('should work correctly', () => {
+    // TODO: 實現測試邏輯
+    expect(true).toBe(true);
+  });
+
+  test('should handle edge cases', () => {
+    // TODO: 測試邊界條件
+    expect(true).toBe(true);
+  });
+
+  test('should handle errors gracefully', () => {
+    // TODO: 測試錯誤處理
+    expect(true).toBe(true);
+  });
+});`;
+    }
+
+    return `# TODO: 生成 ${framework} 測試代碼`;
+  }
+
+  private generateTestCases(testType: string): string[] {
+    const commonCases = [
+      '正常輸入測試',
+      '邊界值測試',
+      '錯誤輸入測試',
+      '空值/null 測試'
+    ];
+
+    switch (testType) {
+      case 'unit':
+        return [...commonCases, '函數邏輯測試', '返回值驗證'];
+      case 'integration':
+        return [...commonCases, '模組間交互測試', '數據流測試'];
+      case 'e2e':
+        return [...commonCases, '用戶流程測試', 'UI 交互測試'];
+      default:
+        return commonCases;
+    }
+  }
+
+  private generateCoverageAreas(): string[] {
+    return [
+      '函數入口點',
+      '條件分支',
+      '循環邏輯',
+      '異常處理',
+      '返回路徑'
+    ];
+  }
+
+  /**
+   * 代碼審查
+   */
+  async reviewCode(request: CodeReviewRequest): Promise<{
+    score: number;
+    issues: Array<{
+      type: string;
+      severity: 'low' | 'medium' | 'high' | 'critical';
+      message: string;
+      line?: number;
+      suggestion: string;
+    }>;
+    strengths: string[];
+    recommendations: string[];
+  }> {
+    const { code, focusAreas = ['security', 'performance', 'maintainability', 'best-practices'] } = request;
+    
+    console.error(`[Code Generator] Reviewing code with focus on: ${focusAreas.join(', ')}`);
+    
+    const issues = this.analyzeCodeIssues(code);
+    const strengths = this.identifyCodeStrengths(code);
+    const recommendations = this.generateRecommendations(focusAreas);
+    
+    const score = Math.max(0, 100 - (issues.length * 10));
+
+    return {
+      score,
+      issues,
+      strengths,
+      recommendations
+    };
+  }
+
+  private analyzeCodeIssues(code: string): Array<{
+    type: string;
+    severity: 'low' | 'medium' | 'high' | 'critical';
+    message: string;
+    line?: number;
+    suggestion: string;
+  }> {
+    const issues = [];
+
+    if (code.includes('TODO')) {
+      issues.push({
+        type: 'completeness',
+        severity: 'medium' as const,
+        message: '代碼包含 TODO 標記，需要完成實現',
+        suggestion: '完成 TODO 項目或移除標記'
+      });
+    }
+
+    if (code.includes('any')) {
+      issues.push({
+        type: 'type-safety',
+        severity: 'low' as const,
+        message: '使用了 any 類型，降低了類型安全性',
+        suggestion: '使用具體的類型定義'
+      });
+    }
+
+    if (code.length > 1000 && !code.includes('class') && !code.includes('function')) {
+      issues.push({
+        type: 'structure',
+        severity: 'medium' as const,
+        message: '代碼過長，建議分解為更小的函數或模組',
+        suggestion: '重構為多個較小的函數'
+      });
+    }
+
+    return issues;
+  }
+
+  private identifyCodeStrengths(code: string): string[] {
+    const strengths = [];
+
+    if (code.includes('interface') || code.includes('type')) {
+      strengths.push('使用了 TypeScript 類型定義');
+    }
+
+    if (code.includes('try') && code.includes('catch')) {
+      strengths.push('包含錯誤處理機制');
+    }
+
+    if (code.includes('/**') || code.includes('//')) {
+      strengths.push('包含代碼註釋和文檔');
+    }
+
+    if (code.includes('export')) {
+      strengths.push('使用了模組化設計');
+    }
+
+    return strengths;
+  }
+
+  private generateRecommendations(focusAreas: string[]): string[] {
+    const allRecommendations: Record<string, string[]> = {
+      security: [
+        '添加輸入驗證和清理',
+        '使用參數化查詢防止 SQL 注入',
+        '實施適當的身份驗證和授權',
+        '避免在代碼中暴露敏感信息'
       ],
-      [DevelopmentPhase.DESIGN]: [
-        "設計系統架構",
-        "選擇技術棧",
-        "設計 API 接口",
-        "規劃數據模型"
+      performance: [
+        '優化數據結構和算法',
+        '實施緩存策略',
+        '減少不必要的網絡請求',
+        '使用懶加載和分頁'
       ],
-      [DevelopmentPhase.IMPLEMENTATION]: [
-        "設置開發環境",
-        "實現核心功能",
-        "編寫單元測試",
-        "進行代碼審查"
+      maintainability: [
+        '保持函數簡短和專注',
+        '使用清晰的命名慣例',
+        '添加適當的測試覆蓋',
+        '定期重構和清理代碼'
       ],
-      [DevelopmentPhase.VALIDATION]: [
-        "執行測試套件",
-        "檢查代碼覆蓋率",
-        "進行性能測試",
-        "修復發現的問題"
-      ],
-      [DevelopmentPhase.DEPLOYMENT]: [
-        "準備生產環境",
-        "配置 CI/CD 流水線",
-        "設置監控和日誌",
-        "執行部署"
+      'best-practices': [
+        '遵循 SOLID 原則',
+        '使用一致的代碼格式',
+        '實施適當的日誌記錄',
+        '使用版本控制最佳實踐'
       ]
     };
 
-    return `🎯 **${phase} 階段建議**
-
-${suggestions[phase].map((item, index) => `${index + 1}. ${item}`).join('\n')}
-
-💡 **協作服務建議**
-- Code Generator: 輔助代碼實現
-- Test Validator: 確保代碼質量  
-- Doc Generator: 維護文檔
-- Deployment Manager: 處理部署事宜`;
+    return focusAreas.flatMap(area => allRecommendations[area] || []);
   }
 
   /**
-   * 生成問題解決建議
+   * 獲取 AI 洞察
    */
-  private generateProblemSolvingSuggestions(): string {
-    return `🔧 **問題解決建議**
+  async getAIInsight(query: string): Promise<string> {
+    console.error(`[Code Generator] Processing AI insight query: ${query}`);
+    
+    return `基於你的查詢 "${query}"，我建議：
 
-針對你提到的問題，我建議：
+1. **代碼生成最佳實踐**：
+   - 始終從需求分析開始
+   - 選擇合適的設計模式
+   - 確保代碼可測試性
 
-🔍 **分析步驟**
-1. 檢查相關的歷史決策和上下文
-2. 確認當前技術棧和約束
-3. 查看類似問題的解決記錄
+2. **質量保證**：
+   - 實施代碼審查流程
+   - 添加單元測試和集成測試
+   - 使用靜態代碼分析工具
 
-🤝 **服務協作**
-- 如果是代碼問題：與 Code Generator 協作
-- 如果是測試問題：與 Test Validator 協作
-- 如果是部署問題：與 Deployment Manager 協作
+3. **性能優化**：
+   - 分析瓶頸並優化關鍵路徑
+   - 實施適當的緩存策略
+   - 監控應用程序性能
 
-📝 **記錄和學習**
-解決問題後，記得：
-- 記錄解決方案和決策邏輯
-- 更新相關文檔
-- 分享給團隊成員
-
-需要我協調特定的服務來幫助解決這個問題嗎？`;
+如需更具體的建議，請提供更詳細的上下文。`;
   }
 }
 
-// MCP Server 實現
+// 創建服務實例
+const codeGenerator = new VibeCodeGenerator();
+
+// 創建 MCP 服務器
 const server = new Server(
   {
     name: 'vibecoding-code-generator',
@@ -482,44 +641,27 @@ const server = new Server(
   },
   {
     capabilities: {
-      resources: {},
       tools: {},
     },
   }
 );
 
-const contextManager = new VibeContextManager();
-
-// 工具定義
+// 註冊工具
 server.setRequestHandler(ListToolsRequestSchema, async () => {
-    return {
+  return {
     tools: [
       {
         name: 'start-session',
-        description: 'Start a new VibeCoding development session',
+        description: 'Start a new code generation session',
         inputSchema: {
           type: 'object',
           properties: {
             projectId: {
               type: 'string',
-              description: 'Optional project ID to continue working on'
-            }
-          }
-        }
-      },
-      {
-        name: 'get-ai-insight',
-        description: 'Get AI-powered insights and suggestions based on current context',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            query: {
-              type: 'string',
-              description: 'Your question or area you want insights about'
-            }
+              description: 'Optional project ID to continue working on',
+            },
           },
-          required: ['query']
-        }
+        },
       },
       {
         name: 'generate-code',
@@ -529,24 +671,24 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: {
             requirements: {
               type: 'string',
-              description: 'The requirements or specifications for code generation'
+              description: 'The requirements or specifications for code generation',
             },
             language: {
               type: 'string',
-              description: 'Programming language (e.g., typescript, python, javascript)'
-            },
-            framework: {
-              type: 'string',
-              description: 'Framework to use (e.g., react, express, fastapi)'
+              description: 'Programming language (e.g., typescript, python, javascript)',
             },
             codeType: {
               type: 'string',
               enum: ['component', 'service', 'api', 'utility', 'model'],
-              description: 'Type of code to generate'
-            }
+              description: 'Type of code to generate',
+            },
+            framework: {
+              type: 'string',
+              description: 'Framework to use (e.g., react, express, fastapi)',
+            },
           },
-          required: ['requirements', 'language']
-        }
+          required: ['requirements', 'language'],
+        },
       },
       {
         name: 'refactor-code',
@@ -556,20 +698,20 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: {
             code: {
               type: 'string',
-              description: 'The code to refactor'
+              description: 'The code to refactor',
             },
             refactorType: {
               type: 'string',
               enum: ['performance', 'readability', 'structure', 'security'],
-              description: 'Type of refactoring to perform'
+              description: 'Type of refactoring to perform',
             },
             targetPattern: {
               type: 'string',
-              description: 'Design pattern or architecture to apply'
-            }
+              description: 'Design pattern or architecture to apply',
+            },
           },
-          required: ['code', 'refactorType']
-        }
+          required: ['code', 'refactorType'],
+        },
       },
       {
         name: 'generate-tests',
@@ -579,20 +721,20 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: {
             code: {
               type: 'string',
-              description: 'The code to generate tests for'
+              description: 'The code to generate tests for',
             },
             testType: {
               type: 'string',
               enum: ['unit', 'integration', 'e2e'],
-              description: 'Type of tests to generate'
+              description: 'Type of tests to generate',
             },
             framework: {
               type: 'string',
-              description: 'Testing framework (e.g., jest, pytest, cypress)'
-            }
+              description: 'Testing framework (e.g., jest, pytest, cypress)',
+            },
           },
-          required: ['code', 'testType']
-        }
+          required: ['code', 'testType'],
+        },
       },
       {
         name: 'code-review',
@@ -602,221 +744,100 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: {
             code: {
               type: 'string',
-              description: 'The code to review'
+              description: 'The code to review',
             },
             focusAreas: {
               type: 'array',
               items: {
                 type: 'string',
-                enum: ['security', 'performance', 'maintainability', 'best-practices']
+                enum: ['security', 'performance', 'maintainability', 'best-practices'],
               },
-              description: 'Areas to focus on during review'
-            }
+              description: 'Areas to focus on during review',
+            },
           },
-          required: ['code']
-        }
-      }
-    ]
+          required: ['code'],
+        },
+      },
+      {
+        name: 'get-ai-insight',
+        description: 'Get AI-powered insights and suggestions based on current context',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            query: {
+              type: 'string',
+              description: 'Your question or area you want insights about',
+            },
+          },
+          required: ['query'],
+        },
+      },
+    ],
   };
 });
 
-// 工具執行處理
+// 處理工具調用
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   try {
     const { name, arguments: args } = request.params;
 
     switch (name) {
-      case 'start-session': {
-        const parsedArgs = z.object({ projectId: z.string().optional() }).parse(args);
-        const session = await contextManager.startSession(parsedArgs.projectId);
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `🚀 **VibeCoding 會話已啟動**\n\n會話ID: ${session.id}\n開始時間: ${session.startedAt.toLocaleString()}\n${parsedArgs.projectId ? `項目: ${parsedArgs.projectId}` : '新項目會話'}\n\n準備開始對話式開發！`
-            }
-          ]
+      case 'start-session':
+        return { 
+          content: [{ 
+            type: 'text', 
+            text: JSON.stringify(await codeGenerator.startSession(), null, 2),
+          }] 
         };
-      }
 
-      case 'get-ai-insight': {
-        const parsedArgs = z.object({ query: z.string() }).parse(args);
-        const insight = await contextManager.getAIInsight(parsedArgs.query);
-        return {
-          content: [
-            {
-              type: 'text',
-              text: insight
-            }
-          ]
-        };
-      }
+      case 'generate-code':
+        const generateResult = await codeGenerator.generateCode({
+          requirements: extractStringParam(args, 'requirements'),
+          language: extractStringParam(args, 'language', 'typescript'),
+          codeType: extractParam(args, 'codeType', 'utility' as 'component' | 'service' | 'api' | 'utility' | 'model'),
+          framework: extractOptionalStringParam(args, 'framework'),
+        });
+        return { content: [{ type: 'text', text: JSON.stringify(generateResult, null, 2) }] };
 
-      case 'generate-code': {
-        const parsedArgs = z.object({
-          requirements: z.string(),
-          language: z.string(),
-          framework: z.string().optional(),
-          codeType: z.enum(['component', 'service', 'api', 'utility', 'model']).optional()
-        }).parse(args);
+      case 'refactor-code':
+        const refactorResult = await codeGenerator.refactorCode({
+          code: extractStringParam(args, 'code'),
+          refactorType: extractParam(args, 'refactorType', 'readability' as 'performance' | 'readability' | 'structure' | 'security'),
+          targetPattern: extractOptionalStringParam(args, 'targetPattern'),
+        });
+        return { content: [{ type: 'text', text: JSON.stringify(refactorResult, null, 2) }] };
 
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `🚀 **代碼生成完成**
+      case 'generate-tests':
+        const testResult = await codeGenerator.generateTests({
+          code: extractStringParam(args, 'code'),
+          testType: extractParam(args, 'testType', 'unit' as 'unit' | 'integration' | 'e2e'),
+          framework: extractStringParam(args, 'framework', 'jest'),
+        });
+        return { content: [{ type: 'text', text: JSON.stringify(testResult, null, 2) }] };
 
-**需求**: ${parsedArgs.requirements}
-**語言**: ${parsedArgs.language}
-**框架**: ${parsedArgs.framework || '未指定'}
-**類型**: ${parsedArgs.codeType || '通用'}
+      case 'code-review':
+        const reviewResult = await codeGenerator.reviewCode({
+          code: extractStringParam(args, 'code'),
+          focusAreas: extractArrayParam(args, 'focusAreas', ['best-practices' as 'security' | 'performance' | 'maintainability' | 'best-practices']),
+        });
+        return { content: [{ type: 'text', text: JSON.stringify(reviewResult, null, 2) }] };
 
-\`\`\`${parsedArgs.language}
-// 基於需求生成的代碼示例
-// TODO: 實際代碼生成邏輯將在此處實現
-class GeneratedCode {
-  constructor() {
-    // 根據 ${parsedArgs.requirements} 生成的構造函數
-  }
-  
-  // 主要功能方法
-  execute() {
-    // 實現核心邏輯
-  }
-}
-\`\`\`
-
-💡 **建議**:
-- 建議添加單元測試覆蓋
-- 考慮使用 TypeScript 增強類型安全
-- 遵循 ${parsedArgs.language} 最佳實踐`
-            }
-          ]
-        };
-      }
-
-      case 'refactor-code': {
-        const parsedArgs = z.object({
-          code: z.string(),
-          refactorType: z.enum(['performance', 'readability', 'structure', 'security']),
-          targetPattern: z.string().optional()
-        }).parse(args);
-
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `🔧 **代碼重構建議**
-
-**重構類型**: ${parsedArgs.refactorType}
-**目標模式**: ${parsedArgs.targetPattern || '通用優化'}
-
-**原始代碼分析**:
-- 複雜度: 中等
-- 可讀性: 需要改進
-- 性能: 可優化
-
-**重構後代碼**:
-\`\`\`typescript
-// 重構後的代碼將更加清晰和高效
-// TODO: 實際重構邏輯將在此處實現
-\`\`\`
-
-**改進點**:
-- ✅ 提升了代碼可讀性
-- ✅ 優化了性能表現
-- ✅ 增強了可維護性`
-            }
-          ]
-        };
-      }
-
-      case 'generate-tests': {
-        const parsedArgs = z.object({
-          code: z.string(),
-          testType: z.enum(['unit', 'integration', 'e2e']),
-          framework: z.string().optional()
-        }).parse(args);
-
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `🧪 **測試代碼生成完成**
-
-**測試類型**: ${parsedArgs.testType}
-**測試框架**: ${parsedArgs.framework || '自動選擇'}
-
-\`\`\`typescript
-// 生成的測試代碼
-describe('Generated Tests', () => {
-  test('should pass basic functionality test', () => {
-    // TODO: 實際測試生成邏輯
-    expect(true).toBe(true);
-  });
-  
-  test('should handle edge cases', () => {
-    // 邊界條件測試
-  });
-});
-\`\`\`
-
-**測試覆蓋範圍**:
-- ✅ 基本功能測試
-- ✅ 邊界條件測試
-- ✅ 錯誤處理測試`
-            }
-          ]
-        };
-      }
-
-      case 'code-review': {
-        const parsedArgs = z.object({
-          code: z.string(),
-          focusAreas: z.array(z.enum(['security', 'performance', 'maintainability', 'best-practices'])).optional()
-        }).parse(args);
-
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `📋 **代碼審查報告**
-
-**審查重點**: ${parsedArgs.focusAreas?.join(', ') || '全面審查'}
-
-**審查結果**:
-
-🔒 **安全性** (A-)
-- ✅ 無明顯安全漏洞
-- ⚠️ 建議添加輸入驗證
-
-⚡ **性能** (B+)
-- ✅ 算法效率良好
-- ⚠️ 可考慮緩存優化
-
-🔧 **可維護性** (A)
-- ✅ 代碼結構清晰
-- ✅ 命名規範良好
-
-📚 **最佳實踐** (B)
-- ✅ 遵循編碼規範
-- ⚠️ 建議添加更多註釋
-
-**改進建議**:
-1. 添加輸入參數驗證
-2. 實施緩存機制提升性能
-3. 增加詳細的函數註釋`
-            }
-          ]
-        };
-      }
+      case 'get-ai-insight':
+        const insight = await codeGenerator.getAIInsight(extractStringParam(args, 'query'));
+        return { content: [{ type: 'text', text: insight }] };
 
       default:
-        throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
+        throw new McpError(
+          ErrorCode.MethodNotFound,
+          `Unknown tool: ${name}`
+        );
     }
   } catch (error) {
-    console.error('Tool execution error:', error);
-    throw new McpError(ErrorCode.InternalError, `Tool execution failed: ${error}`);
+    console.error('[Code Generator] Tool execution error:', error);
+    throw new McpError(
+      ErrorCode.InternalError,
+      `Tool execution failed: ${error instanceof Error ? error.message : String(error)}`
+    );
   }
 });
 
@@ -824,9 +845,9 @@ describe('Generated Tests', () => {
 async function runServer() {
   const transport = new StdioServerTransport();
   
-  console.error('🎯 VibeCoding Context Manager MCP Server starting...');
+  console.error('🎯 VibeCoding Code Generator MCP Server starting...');
   console.error('📋 Prompt system integration: ENABLED');
-  console.error('🔧 Available tools: start-session, add-conversation, record-decision, get-context-summary, get-relevant-history, get-ai-insight');
+  console.error('🔧 Available tools: start-session, generate-code, refactor-code, generate-tests, code-review, get-ai-insight');
   
   await server.connect(transport);
 }
@@ -834,4 +855,27 @@ async function runServer() {
 runServer().catch((error) => {
   console.error('Failed to start server:', error);
   process.exit(1);
-}); 
+});
+
+// MCP 參數類型轉換助手
+function extractParam<T>(args: unknown, key: string, defaultValue: T): T {
+  if (args && typeof args === 'object' && args !== null) {
+    const value = (args as Record<string, unknown>)[key];
+    return value !== undefined ? value as T : defaultValue;
+  }
+  return defaultValue;
+}
+
+function extractStringParam(args: unknown, key: string, defaultValue: string = ''): string {
+  return extractParam(args, key, defaultValue);
+}
+
+function extractOptionalStringParam(args: unknown, key: string): string | undefined {
+  const value = extractParam(args, key, undefined);
+  return value as string | undefined;
+}
+
+function extractArrayParam<T>(args: unknown, key: string, defaultValue: T[]): T[] {
+  const value = extractParam(args, key, defaultValue);
+  return Array.isArray(value) ? value : defaultValue;
+} 

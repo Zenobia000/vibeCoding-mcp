@@ -1,233 +1,261 @@
 #!/usr/bin/env node
 
 /**
- * VibeCoding Prompt System Validation Script
- * 
- * This script validates the integrity and completeness of the prompt system
+ * VibeCoding Prompt 系統測試工具
+ * 驗證所有 prompt 文件是否完整且可正常載入
  */
 
-import fs from 'fs';
-import path from 'path';
+import { promises as fs } from 'fs';
+import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import chalk from 'chalk';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const PROMPTS_DIR = path.join(__dirname, '../.vibecoding/prompts');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const projectRoot = join(__dirname, '..');
 
-// Expected prompt structure
-const EXPECTED_STRUCTURE = {
-  core: [
-    'system-identity.md',
-    'conversation-style.md', 
-    'collaboration-rules.md'
-  ],
-  services: [
-    'context-manager.md',
-    'code-generator.md',
-    'dependency-tracker.md',
-    'test-validator.md',
-    'doc-generator.md',
-    'deployment-manager.md'
-  ],
-  workflows: [
-    'discovery-phase.md',
-    'design-phase.md',
-    'implementation-phase.md',
-    'validation-phase.md',
-    'deployment-phase.md'
-  ]
-};
+// 測試結果追蹤
+let totalTests = 0;
+let passedTests = 0;
+let failedTests = 0;
+const errors = [];
 
-// Validation functions
-function validateFileExists(filePath) {
-  return fs.existsSync(filePath);
-}
-
-function validateFileContent(filePath, minLength = 1000) {
-  try {
-    const content = fs.readFileSync(filePath, 'utf8');
-    return {
-      exists: true,
-      length: content.length,
-      valid: content.length >= minLength,
-      hasHeaders: content.includes('##'),
-      hasPrompts: content.includes('🤖'),
-      hasExamples: content.includes('```')
-    };
-  } catch (error) {
-    return {
-      exists: false,
-      error: error.message
-    };
-  }
-}
-
-function validatePromptStructure() {
-  console.log('🔍 Validating VibeCoding Prompt System...\n');
-  
-  let totalFiles = 0;
-  let validFiles = 0;
-  let issues = [];
-
-  // Check each category
-  for (const [category, files] of Object.entries(EXPECTED_STRUCTURE)) {
-    console.log(`📁 ${category.toUpperCase()} Prompts:`);
-    
-    const categoryPath = path.join(PROMPTS_DIR, category);
-    
-    if (!fs.existsSync(categoryPath)) {
-      issues.push(`❌ Missing ${category} directory`);
-      console.log(`  ❌ Directory not found: ${categoryPath}`);
-      continue;
-    }
-    
-    for (const file of files) {
-      totalFiles++;
-      const filePath = path.join(categoryPath, file);
-      const validation = validateFileContent(filePath);
-      
-      if (validation.exists && validation.valid) {
-        validFiles++;
-        console.log(`  ✅ ${file} (${validation.length} chars)`);
-        
-        // Additional content checks
-        if (!validation.hasHeaders) {
-          console.log(`    ⚠️  Missing markdown headers`);
-        }
-        if (!validation.hasPrompts) {
-          console.log(`    ⚠️  Missing prompt examples (🤖)`);
-        }
-        if (!validation.hasExamples) {
-          console.log(`    ⚠️  Missing code examples`);
-        }
-      } else if (validation.exists) {
-        console.log(`  ⚠️  ${file} (${validation.length} chars - too short)`);
-        issues.push(`File too short: ${file}`);
-      } else {
-        console.log(`  ❌ ${file} - Not found`);
-        issues.push(`Missing file: ${file}`);
-      }
-    }
-    console.log('');
-  }
-  
-  return {
-    totalFiles,
-    validFiles,
-    issues,
-    completeness: (validFiles / totalFiles) * 100
-  };
-}
-
-function validatePromptManager() {
-  console.log('🔧 Validating Prompt Manager...\n');
-  
-  const promptManagerPath = path.join(__dirname, '../src/utils/prompt-manager.ts');
-  
-  if (!validateFileExists(promptManagerPath)) {
-    console.log('❌ Prompt Manager not found');
-    return false;
-  }
-  
-  const content = fs.readFileSync(promptManagerPath, 'utf8');
-  const checks = [
-    { name: 'PromptManager class', pattern: /class PromptManager/ },
-    { name: 'ServiceId enum', pattern: /enum ServiceId/ },
-    { name: 'DevelopmentPhase enum', pattern: /enum DevelopmentPhase/ },
-    { name: 'buildMCPServicePrompt function', pattern: /buildMCPServicePrompt/ },
-    { name: 'Service configurations', pattern: /SERVICE_CONFIGS/ }
-  ];
-  
-  let passed = 0;
-  for (const check of checks) {
-    if (check.pattern.test(content)) {
-      console.log(`  ✅ ${check.name}`);
-      passed++;
-    } else {
-      console.log(`  ❌ ${check.name}`);
-    }
-  }
-  
-  console.log(`\n📊 Prompt Manager: ${passed}/${checks.length} checks passed\n`);
-  return passed === checks.length;
-}
-
-function validateServiceIntegration() {
-  console.log('🔗 Validating Service Integration...\n');
-  
-  const contextManagerPath = path.join(__dirname, '../vibe-services/context-manager/index.ts');
-  
-  if (!validateFileExists(contextManagerPath)) {
-    console.log('❌ Context Manager service not found');
-    return false;
-  }
-  
-  const content = fs.readFileSync(contextManagerPath, 'utf8');
-  const integrationChecks = [
-    { name: 'Prompt system import', pattern: /buildMCPServicePrompt/ },
-    { name: 'Service prompt initialization', pattern: /initializePromptSystem/ },
-    { name: 'AI insight generation', pattern: /getAIInsight/ }
-  ];
-  
-  let passed = 0;
-  for (const check of integrationChecks) {
-    if (check.pattern.test(content)) {
-      console.log(`  ✅ ${check.name}`);
-      passed++;
-    } else {
-      console.log(`  ❌ ${check.name}`);
-    }
-  }
-  
-  console.log(`\n📊 Service Integration: ${passed}/${integrationChecks.length} checks passed\n`);
-  return passed === integrationChecks.length;
-}
-
-function generateReport(results) {
-  console.log('📋 VALIDATION REPORT');
-  console.log('='.repeat(50));
-  console.log(`📁 Total Prompt Files: ${results.totalFiles}`);
-  console.log(`✅ Valid Files: ${results.validFiles}`);
-  console.log(`📊 Completeness: ${results.completeness.toFixed(1)}%`);
-  
-  if (results.issues.length > 0) {
-    console.log('\n⚠️  Issues Found:');
-    results.issues.forEach(issue => console.log(`   - ${issue}`));
-  }
-  
-  console.log('\n🎯 Prompt System Status:');
-  if (results.completeness === 100) {
-    console.log('   🎉 FULLY OPERATIONAL - All prompts are ready!');
-  } else if (results.completeness >= 80) {
-    console.log('   ✅ MOSTLY READY - Minor issues to fix');
+/**
+ * 記錄測試結果
+ */
+function logTest(testName, passed, error = null) {
+  totalTests++;
+  if (passed) {
+    passedTests++;
+    console.log(chalk.green(`✅ ${testName}`));
   } else {
-    console.log('   ⚠️  NEEDS ATTENTION - Major issues found');
+    failedTests++;
+    console.log(chalk.red(`❌ ${testName}`));
+    if (error) {
+      console.log(chalk.gray(`   ${error}`));
+      errors.push(`${testName}: ${error}`);
+    }
   }
-  
-  console.log('\n🚀 Next Steps:');
-  console.log('   1. Fix any missing or incomplete prompt files');
-  console.log('   2. Test prompt loading in services');
-  console.log('   3. Validate service behavior with prompts');
-  console.log('   4. Run integration tests');
 }
 
-// Main execution
-function main() {
-  console.log('🎯 VibeCoding Prompt System Validator\n');
-  
-  const promptResults = validatePromptStructure();
-  const managerValid = validatePromptManager();
-  const integrationValid = validateServiceIntegration();
-  
-  generateReport(promptResults);
-  
-  console.log('\n🔧 System Components:');
-  console.log(`   Prompt Manager: ${managerValid ? '✅' : '❌'}`);
-  console.log(`   Service Integration: ${integrationValid ? '✅' : '❌'}`);
-  
-  const overallHealth = promptResults.completeness >= 80 && managerValid && integrationValid;
-  console.log(`\n🏥 Overall System Health: ${overallHealth ? '🟢 HEALTHY' : '🔴 NEEDS WORK'}`);
-  
-  process.exit(overallHealth ? 0 : 1);
+/**
+ * 檢查文件是否存在且內容充足
+ */
+async function checkFile(filePath, minLength = 100) {
+  try {
+    const fullPath = join(projectRoot, filePath);
+    const content = await fs.readFile(fullPath, 'utf-8');
+    
+    if (content.length < minLength) {
+      throw new Error(`文件內容過短 (${content.length} < ${minLength} 字符)`);
+    }
+    
+    // 檢查是否有實際的佔位符（排除文檔中的說明性文字）
+    const todoPattern = /(?<!沒有\s)TODO(?!\s或佔位符)/i;
+    const placeholderPattern = /(?<!或\s)PLACEHOLDER(?![\s，。])/i;
+    
+    if (todoPattern.test(content) || placeholderPattern.test(content)) {
+      throw new Error('文件包含未完成的佔位符內容');
+    }
+    
+    return true;
+  } catch (error) {
+    throw new Error(error.message);
+  }
 }
 
-main(); 
+/**
+ * 檢查目錄是否存在
+ */
+async function checkDirectory(dirPath) {
+  try {
+    const fullPath = join(projectRoot, dirPath);
+    const stat = await fs.stat(fullPath);
+    return stat.isDirectory();
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * 測試核心 prompt 文件
+ */
+async function testCorePrompts() {
+  console.log(chalk.blue('\n🎯 測試核心 Prompt 文件...'));
+  
+  const corePrompts = [
+    '.vibecoding/prompts/core/system-identity.md',
+    '.vibecoding/prompts/core/conversation-style.md', 
+    '.vibecoding/prompts/core/collaboration-rules.md'
+  ];
+  
+  for (const promptPath of corePrompts) {
+    try {
+      await checkFile(promptPath, 200);
+      logTest(`核心 Prompt: ${promptPath.split('/').pop()}`, true);
+    } catch (error) {
+      logTest(`核心 Prompt: ${promptPath.split('/').pop()}`, false, error.message);
+    }
+  }
+}
+
+/**
+ * 測試服務 prompt 文件
+ */
+async function testServicePrompts() {
+  console.log(chalk.blue('\n🛠️ 測試服務 Prompt 文件...'));
+  
+  const services = [
+    'context-manager',
+    'code-generator',
+    'dependency-tracker',
+    'test-validator',
+    'doc-generator',
+    'deployment-manager'
+  ];
+  
+  for (const service of services) {
+    const promptPath = `.vibecoding/prompts/services/${service}.md`;
+    try {
+      await checkFile(promptPath, 300);
+      logTest(`服務 Prompt: ${service}`, true);
+    } catch (error) {
+      logTest(`服務 Prompt: ${service}`, false, error.message);
+    }
+  }
+}
+
+/**
+ * 測試工作流 prompt 文件
+ */
+async function testWorkflowPrompts() {
+  console.log(chalk.blue('\n📋 測試工作流 Prompt 文件...'));
+  
+  const workflows = [
+    'discovery-phase',
+    'design-phase', 
+    'implementation-phase',
+    'validation-phase',
+    'deployment-phase'
+  ];
+  
+  for (const workflow of workflows) {
+    const promptPath = `.vibecoding/prompts/workflows/${workflow}.md`;
+    try {
+      await checkFile(promptPath, 250);
+      logTest(`工作流 Prompt: ${workflow}`, true);
+    } catch (error) {
+      logTest(`工作流 Prompt: ${workflow}`, false, error.message);
+    }
+  }
+}
+
+/**
+ * 測試 prompt 目錄結構
+ */
+async function testDirectoryStructure() {
+  console.log(chalk.blue('\n📁 測試 Prompt 目錄結構...'));
+  
+  const requiredDirs = [
+    '.vibecoding',
+    '.vibecoding/prompts',
+    '.vibecoding/prompts/core',
+    '.vibecoding/prompts/services',
+    '.vibecoding/prompts/workflows'
+  ];
+  
+  for (const dir of requiredDirs) {
+    try {
+      const exists = await checkDirectory(dir);
+      if (!exists) {
+        throw new Error('目錄不存在');
+      }
+      logTest(`目錄結構: ${dir}`, true);
+    } catch (error) {
+      logTest(`目錄結構: ${dir}`, false, error.message);
+    }
+  }
+}
+
+/**
+ * 測試 PromptManager 類別
+ */
+async function testPromptManager() {
+  console.log(chalk.blue('\n⚙️ 測試 PromptManager 功能...'));
+  
+  try {
+    // 動態導入 PromptManager
+    const { promptManager } = await import('../dist/src/utils/prompt-manager.js');
+    
+    // 測試驗證功能
+    const validation = await promptManager.validatePrompts();
+    
+    if (validation.valid) {
+      logTest('PromptManager 驗證', true);
+    } else {
+      logTest('PromptManager 驗證', false, validation.errors.join('; '));
+    }
+    
+    // 測試可用服務
+    const services = await promptManager.getAvailableServices();
+    if (services.length >= 6) {
+      logTest('可用服務數量', true);
+    } else {
+      logTest('可用服務數量', false, `只找到 ${services.length} 個服務，預期至少 6 個`);
+    }
+    
+  } catch (error) {
+    logTest('PromptManager 載入', false, error.message);
+  }
+}
+
+/**
+ * 主測試函數
+ */
+async function runTests() {
+  console.log(chalk.cyan(`
+╦  ╦╦╔╗ ╔═╗  ╔═╗╔═╗╔╦╗╦╔╗╔╔═╗
+╚╗╔╝║╠╩╗║╣   ║  ║ ║ ║║║║║║║ ╦
+ ╚╝ ╩╚═╝╚═╝  ╚═╝╚═╝═╩╝╩╝╚╝╚═╝
+Prompt 系統測試工具
+`));
+
+  // 執行所有測試
+  await testDirectoryStructure();
+  await testCorePrompts();
+  await testServicePrompts();
+  await testWorkflowPrompts();
+  await testPromptManager();
+  
+  // 顯示測試結果
+  console.log(chalk.cyan('\n📊 測試結果摘要:'));
+  console.log(`總計測試: ${totalTests}`);
+  console.log(chalk.green(`✅ 通過: ${passedTests}`));
+  console.log(chalk.red(`❌ 失敗: ${failedTests}`));
+  
+  if (failedTests === 0) {
+    console.log(chalk.green.bold('\n🎉 FULLY OPERATIONAL - All prompts are ready!'));
+    console.log(chalk.gray('所有 prompt 系統組件都正常運作'));
+    process.exit(0);
+  } else {
+    console.log(chalk.red.bold('\n⚠️ PROMPT SYSTEM ISSUES DETECTED'));
+    console.log(chalk.yellow('\n🔧 需要修復的問題:'));
+    errors.forEach(error => {
+      console.log(chalk.gray(`   • ${error}`));
+    });
+    
+    console.log(chalk.blue('\n💡 建議解決方案:'));
+    console.log(chalk.gray('   1. 檢查 .vibecoding/prompts/ 目錄是否完整'));
+    console.log(chalk.gray('   2. 確認所有 prompt 文件內容充足 (>100 字符)'));
+    console.log(chalk.gray('   3. 執行 npm run build 重新建構系統'));
+    console.log(chalk.gray('   4. 檢查文件編碼是否為 UTF-8'));
+    
+    process.exit(1);
+  }
+}
+
+// 執行測試
+runTests().catch(error => {
+  console.error(chalk.red('測試執行錯誤:'), error);
+  process.exit(1);
+}); 

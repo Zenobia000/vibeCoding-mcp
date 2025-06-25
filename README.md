@@ -45,22 +45,58 @@ npm run test:prompts
 
 ### 🏗️ 步驟 2: 建立你的專案資料夾
 
+#### 🆕 方法 1: 一鍵創建增強結構 (推薦)
+
 ```bash
-# 建立新專案目錄 (在任何位置)
+# 建立新專案目錄
 mkdir my-awesome-project
 cd my-awesome-project
 
-# 初始化專案結構 (可選，VibeCoding 會自動建立)
+# 🚀 一鍵創建 VibeCoding 增強專案結構 (含專業模板)
+node /path/to/your/vibeCoding-template/scripts/create-enhanced-project.cjs
+
+# 🎉 完成！自動創建了：
+# ✅ 5個開發階段資料夾 + 完整子資料夾結構
+# ✅ 基於 design_templates 的專業模板
+# ✅ 開發指南、測試策略、部署指南
+# ✅ 專案簡報、架構文檔、ADR 模板
+# ✅ README.md 和 .gitignore 文件
+```
+
+#### 🔧 方法 2: 使用 npm 指令
+
+```bash
+# 建立新專案目錄
+mkdir my-awesome-project
+cd my-awesome-project
+
+# 使用 npm 指令創建結構
+npm run create-project
+
+# 創建內容：
+# ✅ 5個開發階段資料夾 + 完整子資料夾結構
+# ✅ 基於 design_templates 的專業模板
+# ✅ 開發指南、測試策略、部署指南
+# ✅ 專案簡報、架構文檔、ADR 模板
+```
+
+#### 📝 方法 2: 手動創建 (傳統方式)
+
+```bash
+# 建立新專案目錄
+mkdir my-awesome-project
+cd my-awesome-project
+
+# 手動創建 VibeCoding 階段資料夾
+mkdir -p {0_discovery,1_design,2_implementation,3_validation,4_deployment}
 mkdir -p {src,tests,docs,config}
 
-# 初始化 git (推薦)
+# 初始化 git 和 npm
 git init
+npm init -y
 echo "node_modules/" > .gitignore
 echo "dist/" >> .gitignore
 echo ".env" >> .gitignore
-
-# 建立基本 package.json (可選，VibeCoding 可協助生成)
-npm init -y
 ```
 
 ### ⚙️ 步驟 3: 配置 IDE 與 MCP 連接

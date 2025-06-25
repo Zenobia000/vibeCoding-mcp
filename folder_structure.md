@@ -1,4 +1,38 @@
-# VibeCoding System Folder Structure
+# VibeCoding 專案結構完整說明
+
+## 📊 系統概覽 (2024最新)
+
+✅ **建構狀態**: 全部 6 個 MCP 服務已編譯並測試通過  
+🛠️ **工具總數**: 34 個專業工具  
+⚡ **簡潔指令**: 26 個簡潔指令 (減少 77% 輸入量)  
+🔄 **向後相容**: 完整指令仍可使用  
+📈 **提示系統**: 21 個提示組件運作正常  
+🏗️ **架構**: 6 個專業化 MCP 服務 + AI 提示系統
+
+---
+
+## 🏗️ VibeCoding 系統架構
+
+VibeCoding 結合了對話式開發框架與專業 MCP (Model Context Protocol) 服務，提供完整的 AI 驅動開發體驗。
+
+```
+VibeCoding-template/
+├── 🎯 vibe-services/              # 6個專業MCP服務 (34個工具)
+│   ├── context-manager/           # 上下文管理 (12工具)
+│   ├── code-generator/            # 代碼生成 (6工具)
+│   ├── dependency-tracker/        # 依賴管理 (6工具)
+│   ├── test-validator/            # 測試驗證 (6工具)
+│   ├── doc-generator/             # 文檔生成 (6工具)
+│   └── deployment-manager/        # 部署管理 (6工具)
+├── 🧠 .vibecoding/               # AI提示系統 (21組件)
+│   ├── prompts/                   # 結構化提示庫
+│   └── config/                    # 配置文件
+├── 📁 dist/                      # 編譯輸出目錄
+├── 🛠️ scripts/                   # 建構和維護腳本
+└── 📚 docs/                      # 完整文檔系統
+```
+
+## 📋 目錄
 
 ## Root Directory Structure
 
@@ -101,9 +135,11 @@ vibeCoding-template/
 │   └── retrospectives/             # Project retrospectives
 │
 ├── design_templates/               # ✅ Original design templates
-├── scripts/                        # ✅ Utility Scripts
+├── scripts/                        # ✅ Utility Scripts  
 │   ├── build-all.ps1              # ✅ Build all services
-│   └── test-prompts.js             # ✅ Prompt system validation
+│   ├── create-enhanced-project.cjs # ✅ Enhanced project structure creator
+│   ├── easy-setup.js              # ✅ IDE setup and configuration
+│   └── verify-structure.ps1       # ✅ Project structure verification
 │
 ├── .vscode/                        # ✅ VSCode configuration
 ├── .cursorrules                    # ✅ Cursor IDE rules

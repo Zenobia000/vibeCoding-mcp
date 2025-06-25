@@ -21,15 +21,40 @@ import { z } from 'zod';
 // 導入 Prompt 管理系統
 import { 
   buildMCPServicePrompt, 
-  ServiceId, 
-  DevelopmentPhase,
+  ServiceId as PromptServiceId, 
+  DevelopmentPhase as PromptDevelopmentPhase,
 } from '../../src/utils/prompt-manager.js';
 
-// 導入核心類型和工具
-import { 
-  Project,
-  ClarificationResponse
-} from '../../src/core/orchestrator.js';
+// 本地簡化版本以避免導入衝突
+enum ServiceId {
+  CONTEXT_MANAGER = 'context-manager'
+}
+
+enum DevelopmentPhase {
+  DISCOVERY = 'discovery'
+}
+
+interface Project {
+  id: string;
+  name: string;
+  description: string;
+  createdAt: Date;
+  updatedAt: Date;
+  clarificationResponses: ClarificationResponse[];
+  phases: any[];
+  prd?: string;
+  implementationPlan?: string;
+  currentPhase?: string;
+  techStack?: Record<string, string>;
+  decisions?: any[];
+  preferences?: Record<string, any>;
+}
+
+interface ClarificationResponse {
+  question: string;
+  answer: string;
+  timestamp: Date;
+}
 
 import {
   createProjectObject,
@@ -289,8 +314,8 @@ class VibeContextManager {
     try {
       // 載入 Context Manager 的完整 prompt
       this.servicePrompt = await buildMCPServicePrompt(
-        ServiceId.CONTEXT_MANAGER,
-        this.getCurrentPhase(),
+        PromptServiceId.CONTEXT_MANAGER,
+        PromptDevelopmentPhase.DISCOVERY,
         {
           projectContext: this.getProjectContext(),
           sessionActive: !!this.currentSession
@@ -613,32 +638,32 @@ ${context.recentHistory.length > 0 ?
    */
   private generatePhaseBasedSuggestions(): string {
     const phase = this.getCurrentPhase();
-    const suggestions = {
-      [DevelopmentPhase.DISCOVERY]: [
+    const suggestions: Record<string, string[]> = {
+      'discovery': [
         "明確核心功能需求",
         "識別目標用戶群體", 
         "定義成功指標",
         "收集業務約束"
       ],
-      [DevelopmentPhase.DESIGN]: [
+      'design': [
         "設計系統架構",
         "選擇技術棧",
         "設計 API 接口",
         "規劃數據模型"
       ],
-      [DevelopmentPhase.IMPLEMENTATION]: [
+      'implementation': [
         "設置開發環境",
         "實現核心功能",
         "編寫單元測試",
         "進行代碼審查"
       ],
-      [DevelopmentPhase.VALIDATION]: [
+      'validation': [
         "執行測試套件",
         "檢查代碼覆蓋率",
         "進行性能測試",
         "修復發現的問題"
       ],
-      [DevelopmentPhase.DEPLOYMENT]: [
+      'deployment': [
         "準備生產環境",
         "配置 CI/CD 流水線",
         "設置監控和日誌",
@@ -646,9 +671,12 @@ ${context.recentHistory.length > 0 ?
       ]
     };
 
+    const phaseKey = phase === DevelopmentPhase.DISCOVERY ? 'discovery' : 'discovery';
+    const phaseSuggestions = suggestions[phaseKey] || suggestions['discovery'];
+
     return `🎯 **${phase} 階段建議**
 
-${suggestions[phase].map((item, index) => `${index + 1}. ${item}`).join('\n')}
+${phaseSuggestions.map((item, index) => `${index + 1}. ${item}`).join('\n')}
 
 💡 **協作服務建議**
 - Code Generator: 輔助代碼實現

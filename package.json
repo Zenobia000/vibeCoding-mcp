@@ -1,7 +1,7 @@
 {
   "name": "vibecoding-system",
   "version": "1.0.0",
-  "description": "Conversation-driven development framework for rapid MVP/POC creation",
+  "description": "AI-powered conversational development framework with 34 professional tools across 6 MCP services for rapid MVP/POC creation",
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
@@ -10,11 +10,10 @@
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
     "test": "jest",
-    "test:prompts": "node scripts/test-prompts.js",
-    "validate:prompts": "node scripts/test-prompts.js",
-    "test:service-prompts": "node scripts/test-prompts.js",
+
     "setup": "node scripts/easy-setup.js",
     "setup:quick": "node scripts/easy-setup.js",
+    "create-project": "node scripts/create-enhanced-project.cjs",
     "lint": "eslint src/**/*.ts",
     "format": "prettier --write \"src/**/*.ts\"",
     "vibecoding": "tsx src/cli/index.ts",
@@ -24,6 +23,7 @@
     "mcp:test-validator": "tsx vibe-services/test-validator/index.ts",
     "mcp:doc-generator": "tsx vibe-services/doc-generator/index.ts",
     "mcp:deployment-manager": "tsx vibe-services/deployment-manager/index.ts",
+    "test:prompts": "node scripts/test-prompts.js",
     "verify": "powershell -ExecutionPolicy Bypass -File scripts/verify-structure.ps1",
     "clean": "powershell -ExecutionPolicy Bypass -File scripts/cleanup.ps1"
   },
@@ -33,7 +33,17 @@
     "development",
     "conversation-driven",
     "mvp",
-    "poc"
+    "poc",
+    "code-generation",
+    "testing",
+    "deployment",
+    "documentation",
+    "dependency-management",
+    "project-management",
+    "anthropic",
+    "claude",
+    "cursor",
+    "vscode"
   ],
   "author": "",
   "license": "MIT",

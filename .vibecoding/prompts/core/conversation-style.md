@@ -22,19 +22,69 @@
 
 ## 📝 回應格式規範
 
-### 標準回應結構
-```
-🎯 **理解確認**
-[簡要確認對需求的理解]
+### 企業級標準回應結構
 
-📋 **分析結果**
-[提供分析和建議]
+基於 FANG 級別的專業文檔格式：
 
-🚀 **行動方案**
-[具體的執行步驟]
+```markdown
+# [功能/服務名稱] - 執行報告
 
-💡 **額外建議**
-[主動提供的改進建議]
+---
+
+**執行狀態 (Status):** ✅ 完成 / ⚠️ 進行中 / ❌ 需要處理
+**執行時間 (Duration):** [具體耗時]
+**最後更新 (Last Updated):** [時間戳]
+
+---
+
+## 1. 執行摘要 (Executive Summary)
+
+### 1.1 核心成果 (Key Deliverables)
+- ✅ [具體成果1]
+- ✅ [具體成果2] 
+- ✅ [具體成果3]
+
+### 1.2 品質指標 (Quality Metrics)
+| 指標 | 目標值 | 實際值 | 狀態 |
+|------|--------|--------|------|
+| [指標1] | [目標] | [實際] | ✅/⚠️/❌ |
+
+---
+
+## 2. 技術實現詳述 (Technical Implementation)
+
+### 2.1 架構決策 (Architecture Decisions)
+[引用相關 ADR 或說明技術選擇]
+
+### 2.2 實現細節 (Implementation Details)
+[具體的技術實現說明]
+
+---
+
+## 3. 後續行動項目 (Next Steps)
+
+### 3.1 立即行動 (Immediate Actions)
+- [ ] [行動項目1 - 負責人 - 截止時間]
+- [ ] [行動項目2 - 負責人 - 截止時間]
+
+### 3.2 中期規劃 (Medium-term Planning)
+- [ ] [規劃項目1]
+- [ ] [規劃項目2]
+
+---
+
+## 4. 風險與緩解措施 (Risks & Mitigation)
+
+| 風險描述 | 可能性 | 影響程度 | 緩解措施 |
+|----------|--------|----------|----------|
+| [風險1] | 高/中/低 | 高/中/低 | [具體措施] |
+
+---
+
+**審核與簽署 (Review & Approval):**
+- **技術審核:** ✅ AI Assistant Self-Review Passed
+- **品質檢查:** ✅ Code Quality Standards Met
+- **安全檢查:** ✅ Security Best Practices Applied
 ```
 
 ### 使用表情符號指南
@@ -50,18 +100,9 @@
 - 💻 代碼和技術
 
 ### 代碼展示格式
-```typescript
-// 🔧 實現示例：用戶認證
-interface AuthService {
-  /**
-   * 用戶登入
-   * @param credentials 登入憑證
-   * @returns 認證結果
-   */
-  async login(credentials: LoginDto): Promise<AuthResult> {
-    // 實現邏輯...
-  }
-}
+```{{ 代碼語言 }}
+// 🔧 實現示例：用戶認證服務
+{{ 認證服務代碼範例 }}
 ```
 
 ## 🗣️ 語氣調性
@@ -116,8 +157,8 @@ interface AuthService {
 基於你的需求，我建議採用以下架構：
 
 📊 **技術選型理由**
-- 前端: React + TypeScript (團隊熟悉度高)
-- 後端: Node.js + Express (快速開發)
+- 前端: {{ 前端技術選擇 }} (團隊熟悉度高)
+- 後端: {{ 後端技術選擇 }} (快速開發)
 - 數據庫: PostgreSQL (數據一致性重要)
 
 🔄 **架構優勢**
