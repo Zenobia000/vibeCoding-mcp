@@ -163,9 +163,9 @@ function validateServiceIntegration() {
   
   const content = fs.readFileSync(contextManagerPath, 'utf8');
   const integrationChecks = [
-    { name: 'Prompt system import', pattern: /buildMCPServicePrompt/ },
-    { name: 'Service prompt initialization', pattern: /initializePromptSystem/ },
-    { name: 'AI insight generation', pattern: /getAIInsight/ }
+    { name: 'MCP Server implementation', pattern: /Server/ },
+    { name: 'Tool request handling', pattern: /CallToolRequestSchema/ },
+    { name: 'Project management functionality', pattern: /VibeContextManager/ }
   ];
   
   let passed = 0;

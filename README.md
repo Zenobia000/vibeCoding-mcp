@@ -45,6 +45,34 @@ npm run test:prompts
 
 ### 🏗️ 步驟 2: 建立你的專案資料夾
 
+#### **🚀 方法一：一鍵增強專案建立 (推薦)**
+
+```bash
+# 建立新專案目錄
+mkdir my-awesome-project
+cd my-awesome-project
+
+# 🚀 一鍵創建 VibeCoding 增強專案結構 (含專業模板)
+# 🌟 推薦使用 v3 版本 (完整整合 v1+v2 所有優勢)
+node /path/to/your/vibeCoding-template/scripts/create-enhanced-project-v3.cjs
+
+# 其他版本選擇：
+# v2 版本 (架構優化，遵循 .vibecoding/prompts 指導原則)
+node /path/to/your/vibeCoding-template/scripts/create-enhanced-project-v2.cjs
+
+# v1 版本 (完整內容)
+node /path/to/your/vibeCoding-template/scripts/create-enhanced-project.cjs
+
+# 🎉 完成！自動創建了：
+# ✅ 5個開發階段資料夾 + 完整子資料夾結構
+# ✅ 基於 design_templates 的專業模板
+# ✅ 開發指南、測試策略、部署指南
+# ✅ 專案簡報、架構文檔、ADR 模板
+# ✅ README.md 和 .gitignore 文件
+```
+
+#### **📝 方法二：手動建立基本結構**
+
 ```bash
 # 建立新專案目錄 (在任何位置)
 mkdir my-awesome-project
@@ -296,13 +324,13 @@ knowledge-base/  → 模式、解決方案和回顧
 start-clarification(projectName: string, initialDescription?: string)
 
 // 提供澄清回答
-provide-clarification(projectId: string, questionIndex: number, answer: string)
+provide-clarification(questionIndex: number, answer: string)
 
 // 生成 PRD
-generate-prd(projectId: string)
+generate-prd()
 
 // 生成實施計劃
-generate-impl-plan(projectId: string)
+generate-impl-plan()
 ```
 
 ### 其他服務 API

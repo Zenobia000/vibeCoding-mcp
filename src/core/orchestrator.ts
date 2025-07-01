@@ -51,6 +51,7 @@ export interface Project {
   id: string;
   name: string;
   description: string;
+  path: string;
   clarificationResponses: ClarificationResponse[];
   prd?: string;
   prdDoc?: string;
@@ -171,6 +172,7 @@ export class VibeCodingOrchestrator extends EventEmitter {
       id: this.generateProjectId(),
       name,
       description,
+      path: this.baseDir,
       clarificationResponses: [],
       phases: [],
       createdAt: now,

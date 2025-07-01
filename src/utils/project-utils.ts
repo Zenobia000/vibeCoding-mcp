@@ -51,12 +51,13 @@ export function now(): Date {
 /**
  * Create a default project object with the given name and description
  */
-export function createProjectObject(name: string, description: string = ""): Project {
+export function createProjectObject(name: string, description: string = "", projectPath: string): Project {
   const timestamp = now();
   return {
     id: generateProjectId(),
     name,
     description,
+    path: projectPath,
     clarificationResponses: [],
     phases: [],
     techStack: {},
